@@ -1,6 +1,6 @@
 <?php
-$botToken = "TU_BOT_TOKEN";
-$chatId = "TU_CHAT_ID";
+$botToken = "7844799050:AAEr7wChEkAp31ktChjaTlguv1aUykSbaxw";
+$chatId = "-1002658316321";
 
 if (!isset($_POST['data'])) {
     file_put_contents("debug.log", "Falta 'data'\n", FILE_APPEND);
