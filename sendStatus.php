@@ -1,8 +1,8 @@
 <?php
 // sendStatus.php
 
-$botToken = "7844799050:AAEr7wChEkAp31ktChjaTlguv1aUykSbaxw";
-$chatId = "-1002658316321";
+$botToken = "7100847504:AAEx_w_mugzLVQp8HgfPxBmlhIBXzD11H_k";
+$chatId = "-4729682252";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $data = json_decode(file_get_contents("php://input"), true);
