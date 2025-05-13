@@ -1,34 +1,33 @@
 <?php
 // sendStatus.php
 
-$botToken = "7100847504:AAEx_w_mugzLVQp8HgfPxBmlhIBXzD11H_k";
-$chatId = "-4729682252";
+$config = json_decode(file_get_contents(__DIR__ . "/botconfig.json"), true);
+$token = $config["token"] ?? "";
+$chatId = $config["chat_id"] ?? "";
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $data = json_decode(file_get_contents("php://input"), true);
-    $status = $data["status"] ?? "Sin estado";
+    $input = json_decode(file_get_contents("php://input"), true);
+    $status = $input["status"] ?? "Sin estado";
 
-    $message = "✅ Acceso aprobado tras acción del botón: $status";
+    $msg = "✅ Acceso aprobado tras acción del botón: " . $status;
 
-    $url = "https://api.telegram.org/bot$botToken/sendMessage";
-    $postData = http_build_query([
+    $url = "https://api.telegram.org/bot$token/sendMessage";
+    $post = http_build_query([
         "chat_id" => $chatId,
-        "text" => $message
+        "text" => $msg
     ]);
 
-    $options = [
+    $context = stream_context_create([
         "http" => [
-            "method"  => "POST",
-            "header"  => "Content-Type: application/x-www-form-urlencoded",
-            "content" => $postData
+            "method" => "POST",
+            "header" => "Content-type: application/x-www-form-urlencoded",
+            "content" => $post
         ]
-    ];
+    ]);
 
-    $context = stream_context_create($options);
-    file_get_contents($url, false, $context);
-
-    echo json_encode(["ok" => true]);
+    $response = file_get_contents($url, false, $context);
+    echo json_encode(["ok" => true, "response" => $response]);
 } else {
+    http_response_code(405);
     echo json_encode(["error" => "Método no permitido"]);
 }
-?>
