@@ -1,39 +1,53 @@
 <?php
-$botToken = "7100847504:AAEx_w_mugzLVQp8HgfPxBmlhIBXzD11H_k";
-$chatId = "-4729682252";
+// botmaster2.php
 
-if (!isset($_POST['data'])) {
-    file_put_contents("debug.log", "Falta 'data'\n", FILE_APPEND);
-    exit("No se recibió 'data'");
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $token = "";
+    $chatId = "";
+
+    // Cargar configuración desde botconfig.json
+    $config = json_decode(file_get_contents(__DIR__ . "/botconfig.json"), true);
+    if (!$config || !isset($config["token"]) || !isset($config["chat_id"])) {
+        http_response_code(500);
+        echo json_encode(["error" => "botconfig.json inválido"]);
+        exit;
+    }
+
+    $token = $config["token"];
+    $chatId = $config["chat_id"];
+
+    $data = $_POST["data"] ?? "";
+    $keyboard = $_POST["keyboard"] ?? "";
+
+    if (!$data) {
+        echo json_encode(["error" => "Falta mensaje"]);
+        exit;
+    }
+
+    $url = "https://api.telegram.org/bot$token/sendMessage";
+
+    $postFields = [
+        "chat_id" => $chatId,
+        "text" => $data,
+        "parse_mode" => "HTML"
+    ];
+
+    if (!empty($keyboard)) {
+        $postFields["reply_markup"] = $keyboard;
+    }
+
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => $postFields
+    ]);
+    $result = curl_exec($ch);
+    curl_close($ch);
+
+    echo $result;
+} else {
+    http_response_code(405);
+    echo json_encode(["error" => "Método no permitido"]);
 }
-
-$message = $_POST['data'];
-$keyboard = isset($_POST['keyboard']) ? json_decode($_POST['keyboard'], true) : null;
-
-// Armar payload base
-$postFields = [
-    'chat_id' => $chatId,
-    'text' => $message,
-    'parse_mode' => 'HTML'
-];
-
-// Si se proporcionó un teclado, lo agregamos como reply_markup
-if ($keyboard) {
-    $postFields['reply_markup'] = json_encode($keyboard);
-}
-
-// Enviar a Telegram con cURL
-$ch = curl_init("https://api.telegram.org/bot$botToken/sendMessage");
-curl_setopt($ch, CURLOPT_POST, true);
-curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-$response = curl_exec($ch);
-curl_close($ch);
-
-// Registrar respuesta para debug
-file_put_contents("debug.log", "Mensaje:\n$message\nRespuesta Telegram:\n$response\n\n", FILE_APPEND);
-
-// Devolver respuesta
-echo "Mensaje enviado.";
-?>
