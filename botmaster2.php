@@ -3,68 +3,48 @@
 
 if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     http_response_code(405);
-    echo json_encode(["error" => "Método no permitido"]);
+    echo "Método no permitido";
     exit;
 }
 
-// Cargar configuración desde botconfig.json
-$configPath = __DIR__ . "/botconfig.json";
+$data = $_POST["data"] ?? "";
+$keyboard = $_POST["keyboard"] ?? "";
+
+$configPath = "botconfig.json";
+
 if (!file_exists($configPath)) {
     http_response_code(500);
-    echo json_encode(["error" => "Archivo de configuración no encontrado"]);
+    echo "Archivo de configuración no encontrado";
     exit;
 }
 
 $config = json_decode(file_get_contents($configPath), true);
-if (!isset($config['token'], $config['chat_id'])) {
-    http_response_code(500);
-    echo json_encode(["error" => "Token o Chat ID faltante en botconfig.json"]);
-    exit;
-}
+$token = $config["token"] ?? null;
+$chat_id = $config["chat_id"] ?? null;
 
-$token = $config['token'];
-$chat_id = $config['chat_id'];
-
-// Obtener mensaje y teclado desde POST
-$mensaje = $_POST['data'] ?? null;
-$keyboard = $_POST['keyboard'] ?? null;
-
-if (!$mensaje) {
+if (!$token || !$chat_id || !$data) {
     http_response_code(400);
-    echo json_encode(["error" => "Falta mensaje"]);
+    echo "Faltan datos necesarios (token, chat_id o data)";
     exit;
 }
 
-// Crear cuerpo de solicitud
-$body = [
+$mensaje = [
     "chat_id" => $chat_id,
-    "text" => $mensaje,
+    "text" => $data,
     "parse_mode" => "HTML"
 ];
 
 if ($keyboard) {
-    $body["reply_markup"] = $keyboard;
+    $mensaje["reply_markup"] = json_decode($keyboard, true);
 }
 
-$url = "https://api.telegram.org/bot{$token}/sendMessage";
-
-$ch = curl_init();
-curl_setopt_array($ch, [
-    CURLOPT_URL => $url,
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_POST => true,
-    CURLOPT_HTTPHEADER => ["Content-Type: application/json"],
-    CURLOPT_POSTFIELDS => json_encode($body)
-]);
+$ch = curl_init("https://api.telegram.org/bot$token/sendMessage");
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($mensaje));
+curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json"]);
 
 $response = curl_exec($ch);
-$httpcode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
-// Respuesta
-if ($httpcode === 200) {
-    echo json_encode(["ok" => true, "telegram_response" => json_decode($response, true)]);
-} else {
-    http_response_code($httpcode);
-    echo json_encode(["error" => "Error al enviar a Telegram", "response" => $response]);
-}
+echo $response;
